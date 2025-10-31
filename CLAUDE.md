@@ -10,9 +10,57 @@ Este repositorio contiene scripts SQL y utilidades para gestionar y consultar la
 
 Todas las operaciones de base de datos se realizan a través de una API remota del servidor MCP con los siguientes comandos aprobados:
 
-### Comandos curl pre-aprobados:
-- `curl -X POST 'http://65.21.188.158:7400/run_query' -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' -H 'Content-Type: application/json' -d '{"query":"<SQL_QUERY>"}'`
-- `curl -X POST 'http://65.21.188.158:7400/get_view_details' -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' -H 'Content-Type: application/json' -d '{"view":"<VIEW_NAME>"}'`
+### Herramientas Disponibles del MCP
+
+El servidor MCP ofrece las siguientes herramientas:
+
+**Estructura de la Base de Datos:**
+- `list_mariadb_structure`: Lista nombres de tablas, vistas, procedures, functions y triggers (ligero)
+- `list_mariadb_structure_full`: Estructura completa con detalles de columnas (pesado)
+- `db_summary`: Resumen de tablas con tamaños y cantidad de filas
+
+**Consultas de Metadatos:**
+- `get_table_details`: Detalles de tabla específica (columnas, índices, status)
+- `get_view_details`: Definición y columnas de una vista
+- `get_procedure_details`: Definición de procedimiento almacenado
+- `get_function_details`: Definición de función
+- `get_trigger_details`: Definición de trigger
+
+**Consultas de Datos:**
+- `run_query`: Ejecuta consulta SELECT personalizada
+- `select_table_preview`: Vista previa de registros de tabla con límite
+
+**Ejemplos de comandos curl:**
+```bash
+# Listar estructura de la base de datos
+curl -X POST 'http://65.21.188.158:7400/list_mariadb_structure' \
+  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
+  -H 'Content-Type: application/json'
+
+# Obtener detalles de una tabla
+curl -X POST 'http://65.21.188.158:7400/get_table_details' \
+  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"agencias"}'
+
+# Obtener definición de un procedimiento
+curl -X POST 'http://65.21.188.158:7400/get_procedure_details' \
+  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
+  -H 'Content-Type: application/json' \
+  -d '{"procedure":"generar_snapshots_gerencias"}'
+
+# Vista previa de una tabla
+curl -X POST 'http://65.21.188.158:7400/select_table_preview' \
+  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"gerencias","limit":10}'
+
+# Ejecutar consulta personalizada
+curl -X POST 'http://65.21.188.158:7400/run_query' \
+  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"SELECT * FROM gerencias WHERE Status = '\''ACTIVA'\'' LIMIT 10"}'
+```
 
 **Importante**: Solo se permiten consultas SELECT a través del servidor MCP. Las operaciones DDL (CREATE, ALTER, DROP) deben proporcionarse como scripts SQL para ejecución manual.
 
