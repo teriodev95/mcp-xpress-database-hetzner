@@ -1,0 +1,2 @@
+curl --location 'http://65.21.188.158:7400/tools/list' \
+--header 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@'
