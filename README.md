@@ -19,10 +19,26 @@ curl -X POST 'http://65.21.188.158:7400/list_mariadb_structure' \
 
 ## Scripts Disponibles
 
+### Cierres Semanales
 - **crear_function_status_cierre.sql** - Procedimientos para verificar estado de cierres semanales
 - **query_agencias_con_cierre_semanal.sql** - Consulta agencias con cierre
 - **query_agencias_sin_cierre_semanal.sql** - Consulta agencias pendientes de cierre
 - **crear_table_function.sql** - Función reutilizable para agencias sin cerrar
+
+### Préstamos Completados (Respaldo)
+- **crear_tabla_prestamos_completados.sql** - Tabla de respaldo para préstamos pagados completamente
+- **crear_procedure_migrar_prestamos_completados.sql** - Procedimientos para migrar préstamos con Saldo = 0
+- **queries_prestamos_completados.sql** - Consultas útiles para análisis de préstamos completados
+- **EJEMPLO_MIGRACION_PRESTAMOS.sql** - Ejemplo paso a paso con salidas esperadas
+- **GUIA_MIGRACION_PRESTAMOS.md** - Guía completa de uso del sistema de respaldo
+
+### Corrección de Pagos (AbreCon/CierraCon)
+- **trigger_pagos_v3_before_insert_modificado.sql** - Trigger que calcula AbreCon/CierraCon correctamente
+- **corregir_abrecon_cierracon_pagos_v3.sql** - Script para corregir datos históricos con discrepancias
+
+> **IMPORTANTE**: `pagos_v3` tiene ~3.5 millones de registros. Las correcciones se hacen en lotes de 10,000.
+
+> **CRÍTICO**: Los cálculos de débito usan `pagos_dynamic.abre_con`, NO `prestamos_v2.Saldo`. Mantener `pagos_dynamic` actualizado.
 
 ## Herramientas MCP
 
