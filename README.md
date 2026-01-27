@@ -1,6 +1,6 @@
-# MCP Xpress Database - Hetzner
+# MCP Xpress Database
 
-Scripts SQL y utilidades para consultar la base de datos Xpress Dinero mediante servidor MCP.
+Scripts SQL y utilidades para gestionar la base de datos Xpress Dinero mediante servidor MCP.
 
 ## Acceso Rápido
 
@@ -10,55 +10,71 @@ curl -X POST 'http://65.21.188.158:7400/run_query' \
   -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
   -H 'Content-Type: application/json' \
   -d '{"query":"SELECT * FROM gerencias LIMIT 5"}'
-
-# Listar estructura de base de datos
-curl -X POST 'http://65.21.188.158:7400/list_mariadb_structure' \
-  -H 'x-api-key: 9mYS%hyyFGBg#x3ByAu%v@d@' \
-  -H 'Content-Type: application/json'
 ```
 
-## Scripts Disponibles
+## Estructura del Proyecto
 
-### Cierres Semanales
-- **crear_function_status_cierre.sql** - Procedimientos para verificar estado de cierres semanales
-- **query_agencias_con_cierre_semanal.sql** - Consulta agencias con cierre
-- **query_agencias_sin_cierre_semanal.sql** - Consulta agencias pendientes de cierre
-- **crear_table_function.sql** - Función reutilizable para agencias sin cerrar
+```
+MCP-XPRESS/
+├── sql/                    # Scripts SQL organizados por feature
+│   ├── cobranza/          # Historial y cálculos de cobranza
+│   ├── prestamos/         # Gestión de préstamos (activos, completados, borradores)
+│   ├── pagos/             # Triggers y sistema de pagos
+│   ├── cierres/           # Cierres semanales por agencia
+│   ├── liquidaciones/     # Liquidaciones y descuentos
+│   ├── multas/            # Sistema de multas separado
+│   ├── debitos/           # Débitos automáticos
+│   ├── vistas/            # Vistas de base de datos
+│   ├── tests/             # Scripts de prueba
+│   └── mantenimiento/     # Alters y correcciones
+│
+├── docs/                   # Documentación
+│   ├── guias/             # Guías de migración y estrategias
+│   ├── auditorias/        # Reportes de validación
+│   ├── specs/             # Especificaciones de features
+│   └── tickets-api/       # API REST para sistema de tickets
+│
+├── config/                 # Archivos de configuración
+│   ├── calendar17-25.json # Mapeo semanas/fechas
+│   └── conexion-mcp.txt   # Credenciales MCP
+│
+├── scripts/                # Scripts shell (cron, validación)
+├── assets/                 # Imágenes y recursos
+├── filtrado/              # Sistema IA de evaluación crediticia
+├── gastos/                # Gestión de gastos
+├── javalin/               # Servicios backend Java
+├── logs/                  # Auditoría de préstamos
+├── migracion/             # Plan de migración masiva
+└── rh/                    # Módulo de Recursos Humanos
+```
 
-### Préstamos Completados (Respaldo)
-- **crear_tabla_prestamos_completados.sql** - Tabla de respaldo para préstamos pagados completamente
-- **crear_procedure_migrar_prestamos_completados.sql** - Procedimientos para migrar préstamos con Saldo = 0
-- **queries_prestamos_completados.sql** - Consultas útiles para análisis de préstamos completados
-- **EJEMPLO_MIGRACION_PRESTAMOS.sql** - Ejemplo paso a paso con salidas esperadas
-- **GUIA_MIGRACION_PRESTAMOS.md** - Guía completa de uso del sistema de respaldo
+## Features Principales
 
-### Corrección de Pagos (AbreCon/CierraCon)
-- **trigger_pagos_v3_before_insert_modificado.sql** - Trigger que calcula AbreCon/CierraCon correctamente
-- **corregir_abrecon_cierracon_pagos_v3.sql** - Script para corregir datos históricos con discrepancias
+### SQL por Categoría
 
-> **IMPORTANTE**: `pagos_v3` tiene ~3.5 millones de registros. Las correcciones se hacen en lotes de 10,000.
+| Carpeta | Contenido |
+|---------|-----------|
+| `sql/cobranza` | SP de cobranza (V1-V4), historial, dashboard |
+| `sql/prestamos` | Tablas completados/borradores/congelados, migración |
+| `sql/pagos` | Triggers pagos_v3, sincronización, correcciones |
+| `sql/cierres` | Functions status cierre, queries agencias |
+| `sql/liquidaciones` | SP liquidación, cálculos, porcentajes |
+| `sql/multas` | Tabla multas, triggers separación |
+| `sql/debitos` | Tabla débitos, evento automático |
 
-> **CRÍTICO**: Los cálculos de débito usan `pagos_dynamic.abre_con`, NO `prestamos_v2.Saldo`. Mantener `pagos_dynamic` actualizado.
+### Módulos Especiales
 
-## Herramientas MCP
+- **filtrado/** - Prompt IA para evaluación crediticia con score 0-10
+- **rh/** - Especificación completa de módulo RH (15 endpoints)
+- **docs/tickets-api/** - Cliente REST para sistema de tickets CouchDB
 
-El servidor ofrece 10 herramientas para consultar la base de datos:
-- Estructura de base de datos (tablas, vistas, procedures)
-- Detalles de objetos específicos
-- Ejecución de consultas SELECT
-- Vista previa de tablas
+## Documentación
 
-Ver documentación completa en [CLAUDE.md](CLAUDE.md)
+- [CLAUDE.md](CLAUDE.md) - Documentación técnica completa
+- [docs/guias/](docs/guias/) - Guías de migración y estrategias
+- [docs/tickets-api/](docs/tickets-api/) - API de tickets de soporte
 
 ## Datos de Prueba
 
 - **46 Gerencias**: GERC001-GERC010, GERD001-GERD011, GERE001-GERE014, etc.
 - **Semanas recientes**: 43/2025 (242 cierres), 42/2025 (291 cierres)
-
-## Documentación
-
-Consulta [CLAUDE.md](CLAUDE.md) para documentación completa sobre:
-- Arquitectura de base de datos
-- Procedimientos almacenados
-- Lógica de negocio (débito, cobranza, snapshots)
-- Ejemplos de uso

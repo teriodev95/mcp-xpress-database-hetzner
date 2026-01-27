@@ -374,3 +374,32 @@ Variables a reemplazar:
 @PRESTAMO_ID: ID del préstamo
 @SALDO_CORRECTO: Saldo real pendiente
 @COBRADO_CORRECTO: Total cobrado real (Total_a_pagar - Saldo)
+
+## Sistema de Tickets (Soporte Técnico)
+
+Integración con el sistema de tickets de soporte técnico vía CouchDB REST.
+
+**Documentación completa:** `docs/tickets-api/README.md`
+
+### Conexión Rápida
+
+```
+URL: https://couch.clvrt.cc/tickets
+Auth: Basic YWRtaW46Y0d3OUttNGVqdXlxbjllY2E3Sio=
+```
+
+### Operaciones Disponibles
+
+| Acción | Método | Endpoint |
+|--------|--------|----------|
+| Listar tickets | GET | `/_design/tickets/_view/summary` |
+| Tickets por PIN | GET | `/_design/tickets/_view/by_pin?key={pin}` |
+| Obtener ticket | GET | `/ticket_{id}` |
+| Cambiar status | PUT | `/ticket_{id}` (requiere `_rev`) |
+| Agregar mensaje | PUT | `/ticket_{id}` (agregar a `mensajes[]`) |
+
+### Status válidos
+`pendiente` | `en proceso` | `completado`
+
+### Cliente TypeScript
+Ver `docs/tickets-api/tickets-client.ts` para módulo listo para usar.

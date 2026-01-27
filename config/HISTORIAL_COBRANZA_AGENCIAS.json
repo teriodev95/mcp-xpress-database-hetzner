@@ -1,0 +1,282 @@
+{
+  "name": "HISTORIAL-COBRANZA-AGENCIAS",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL generar_snapshots_agencias();",
+        "options": {}
+      },
+      "id": "e7e4e6fa-7b29-40ac-aa3c-768982165d1e",
+      "name": "MySQL",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        140
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "pU7xZOMsUYi9vS3U",
+          "name": "Xpress Prd"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                0,
+                1,
+                4,
+                5,
+                6
+              ],
+              "triggerAtHour": 3,
+              "triggerAtMinute": 50
+            },
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                2
+              ],
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "id": "592ec5a8-9775-441c-a97e-b519b4cb652d",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -20,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "call generar_snapshots_gerencias();",
+        "options": {}
+      },
+      "id": "ce8f63c5-1393-4116-9068-abcc82cbfd23",
+      "name": "MySQL1",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        140
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "pU7xZOMsUYi9vS3U",
+          "name": "Xpress Prd"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1002709570104",
+        "text": "={{ $('DeepSeekApi').first().json.choices[0].message.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "858a5ae0-f78f-47d9-8629-79333bccbba4",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        360
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "PisBhtcDmWRH0HtR",
+          "name": "xBot (Xpress bot)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-bf6ef531aa8f4c7481f1e44f63294aea"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "2a3836d2-c0cc-4715-8b8d-0290fe128de5",
+      "name": "DeepSeekApi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        920,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener el día de la semana actual con JS\nconst dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];\nconst hoy = new Date();\nconst diaSemana = dias[hoy.getDay()];\nconst fecha = hoy.toISOString().split('T')[0]; // YYYY-MM-DD\n\n// Obtener semana y año desde el nodo Calendario\nconst calendario = $('Calendario').all();\nconst { semana, anio } = calendario[0].json;\n\n// Convertir datos a formato limpio tipo resumen\nfunction cleanDataToPrompt(dataArray, title) {\n  const lines = dataArray.map((item) => {\n    const entries = Object.entries(item.json)\n      .map(([k, v]) => `${k}: ${v}`)\n      .join(', ');\n    return `• ${entries}`;\n  });\n  return `📋 ${title} (${dataArray.length} registros):\\n` + lines.join('\\n');\n}\n\n// Obtener datos del nodo MySQL2 (agencias y gerencias)\nconst agencias = $('MySQL2').all();\nconst resumenAgencias = cleanDataToPrompt(agencias, \"Resumen de Agencias y Gerencias\");\n\n// Construir mensaje para Deepseek\nreturn [\n  {\n    json: {\n      model: \"deepseek-reasoner\",\n      messages: [\n        {\n          role: \"system\",\n          content: `\nEres un asistente encargado de generar reportes diarios.\n\nSaluda con algo como: \"¡Hola, buen día! ☀️\", y notifica que comenzarás el registro de números para agencias y gerencias. No hagas preguntas.\n\nIncluye:\n- El día actual de la semana\n- La semana del año y el año (usando el calendario)\n- Cuántas gerencias hay\n- Cuántas agencias hay\nMantén un tono formal y claro. Usa máximo 2 emojis, habla en primera persona.\n          `.trim()\n        },\n        {\n          role: \"user\",\n          content: `\nFecha actual: ${fecha} (${diaSemana}) | Semana: ${semana} | Año: ${anio}\n\n${resumenAgencias}\n          `.trim()\n        }\n      ],\n      stream: false\n    }\n  }\n];\n"
+      },
+      "id": "25043e75-2207-4729-8873-1106066bbf82",
+      "name": "Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select GerenciaID as Gerencia, count(GerenciaID) as cuantasAgenciasTiene from agencias group by GerenciaID",
+        "options": {}
+      },
+      "id": "b4d28219-e082-4001-80d5-a19ef19778a7",
+      "name": "MySQL2",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        360
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "pU7xZOMsUYi9vS3U",
+          "name": "Xpress Prd"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://fast-api-xpress.vercel.app/api/calendario/actual",
+        "options": {}
+      },
+      "id": "9e67220c-cb8c-412b-8629-5a83ef50726c",
+      "name": "Calendario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        140
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c1ecc8ed-aee7-4773-91af-819f4875895c",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        20,
+        360
+      ],
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "MySQL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeekApi": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt": {
+      "main": [
+        [
+          {
+            "node": "DeepSeekApi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL2": {
+      "main": [
+        [
+          {
+            "node": "Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendario": {
+      "main": [
+        [
+          {
+            "node": "MySQL2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL1": {
+      "main": [
+        [
+          {
+            "node": "MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL": {
+      "main": [
+        [
+          {
+            "node": "Calendario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "05437b56-feaa-4fa7-947d-37ae1da24c20",
+  "id": "W8M5xZanGdVZLD2q",
+  "meta": {
+    "instanceId": "4c029ab497bd72735d5005b0e6f810638c35ae65999e5d19c82825a4a8e57059"
+  },
+  "tags": []
+}
