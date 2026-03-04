@@ -1,0 +1,630 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage{hyperref}
+
+\geometry{margin=2cm, top=3cm, bottom=2.5cm}
+
+\definecolor{xpressblue}{RGB}{31, 78, 121}
+\definecolor{xpressgray}{RGB}{89, 89, 89}
+\definecolor{alertred}{RGB}{192, 0, 0}
+\definecolor{lightgray}{RGB}{242, 242, 242}
+
+\titleformat{\section}{\Large\bfseries\color{xpressblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{xpressgray}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{xpressgray}}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{xpressgray}Xpress Dinero --- Reporte de Cobranza Adelantada}
+\fancyhead[R]{\small\color{xpressgray}Semanas 5--6 / 2026}
+\fancyfoot[C]{\small\color{xpressgray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\sisetup{
+  group-separator={,},
+  group-minimum-digits=4,
+  output-decimal-marker={.},
+  round-mode=places,
+  round-precision=2
+}
+
+\newcommand{\money}[1]{\$\num{#1}}
+
+\begin{document}
+
+% --- PORTADA ---
+\thispagestyle{empty}
+\vspace*{4cm}
+\begin{center}
+  {\Huge\bfseries\color{xpressblue} Reporte de Cobranza Adelantada}\\[0.8cm]
+  {\Large\color{xpressgray} An\'alisis de Agencias con Cobro Anticipado\\de Clientes Fuera de Su D\'ia Asignado}\\[2cm]
+  {\large Semanas 5 y 6 del 2026}\\[0.5cm]
+  {\large Enero 28 -- Febrero 7, 2026}\\[3cm]
+  {\normalsize\color{xpressgray} Generado el 6 de febrero de 2026}\\[0.3cm]
+  {\normalsize\color{xpressgray} Fuente: \texttt{vw\_cobranza\_snapshots\_reportes\_generales},
+  \texttt{pagos\_v3}, \texttt{prestamos\_v2}}
+\end{center}
+\newpage
+
+\tableofcontents
+\newpage
+
+% ===================================================================
+\section{Resumen Ejecutivo}
+
+Se detect\'o que \textbf{15 agencias} de \textbf{9 gerencias} en \textbf{5 sucursales}
+presentan cobranza adelantada: cobran clientes cuyo d\'ia de pago es \textbf{jueves}
+durante el \textbf{mi\'ercoles}. De estas, \textbf{8 agencias} repiten el comportamiento
+en ambas semanas analizadas.
+
+\subsection{Cifras Clave}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lrr}
+\toprule
+\textbf{M\'etrica} & \textbf{Semana 5} & \textbf{Semana 6} \\
+\midrule
+Agencias con adelanto & 12 & 13 \\
+Clientes de jueves cobrados en mi\'ercoles & 141 & 140 \\
+Monto total adelantado & \money{82822} & \money{82130} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Distribuci\'on por Sucursal}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Sucursal} & \textbf{Gerencias} & \textbf{Agencias}
+  & \textbf{Adelanto Sem 5} & \textbf{Adelanto Sem 6} \\
+\midrule
+Dinero   & 2 & 6 & \money{16217} & \money{12210} \\
+Efectivo & 3 & 5 & \money{28895} & \money{24818} \\
+Capital  & 1 & 2 & \money{880}   & \money{947} \\
+Plata    & 1 & 1 & \money{3024}  & \money{3398} \\
+Moneda   & 1 & 1 & ---           & \money{137} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Hallazgo Principal}
+
+Los agentes cobran clientes de jueves durante su ruta del mi\'ercoles, inflando
+el \texttt{rendimiento\_miercoles} por encima del 100\% y potencialmente enmascarando
+un bajo rendimiento real del jueves. Las sucursales \textbf{Efectivo} y \textbf{Dinero}
+concentran el 90\% del monto adelantado.
+
+% ===================================================================
+\section{Agencias Consistentes (Ambas Semanas)}
+
+Las siguientes 8 agencias presentan adelanto en ambas semanas, agrupadas por sucursal:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lllrrrr}
+\toprule
+\textbf{Sucursal} & \textbf{Gerencia} & \textbf{Agencia}
+  & \multicolumn{2}{c}{\textbf{Clientes Adel.}}
+  & \multicolumn{2}{c}{\textbf{Monto Adel.}} \\
+\cmidrule(lr){4-5} \cmidrule(lr){6-7}
+& & & \textbf{S5} & \textbf{S6} & \textbf{S5} & \textbf{S6} \\
+\midrule
+capital  & GERC003 & AGC013 & 2  & 2  & \money{881}   & \money{881} \\
+dinero   & GERD009 & AGD076 & 11 & 9  & \money{5745}  & \money{4664} \\
+dinero   & GERD009 & AGD066 & 9  & 10 & \money{5256}  & \money{5760} \\
+dinero   & GERD009 & AGD067 & 6  & 5  & \money{3555}  & \money{3101} \\
+dinero   & GERD011 & AGD078 & 15 & 17 & \money{8777}  & \money{9296} \\
+efectivo & GERE001 & AGE003 & 30 & 33 & \money{20062} & \money{23177} \\
+efectivo & GERE002 & AGE058 & 3  & 2  & \money{1439}  & \money{1039} \\
+plata    & GERP003 & AGP014 & 6  & 7  & \money{3697}  & \money{3912} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===================================================================
+\section{Detalle por Sucursal --- Semana 5 (Enero 28)}
+
+Datos de \texttt{vw\_cobranza\_snapshots\_reportes\_generales}, mi\'ercoles hora 20.
+Cruce verificado con \texttt{pagos\_v3} y \texttt{prestamos\_v2.Dia\_de\_pago}.
+
+% --- CAPITAL ---
+\subsection{Sucursal Capital}
+
+\subsubsection{GERC003}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=4.0]S[table-format=5.0]S[table-format=3.2]S[table-format=4.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGC013 & 8789 & 880 & 9669 & 110.01 & 880 & 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- DINERO ---
+\subsection{Sucursal Dinero}
+
+\subsubsection{GERD009 (5 agencias)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGD067 & 6999  & 4288 & 11287 & 161.26 & 4288 & 6 \\
+AGD066 & 20854 & 6149 & 24763 & 118.74 & 3909 & 9 \\
+AGD076 & 6148  & 5729 & 8285  & 134.75 & 2137 & 11 \\
+AGD086 & 5972  & 4342 & 7543  & 126.31 & 1571 & 7 \\
+AGD085 & 18390 & 6919 & 18987 & 103.25 & 597  & 9 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERD009}} & \textbf{12502} & \textbf{42} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERD011}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGD078 & 31133 & 10051 & 33848 & 108.72 & 2716 & 15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- EFECTIVO ---
+\subsection{Sucursal Efectivo}
+
+\subsubsection{GERE001}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE003 & 31771 & 32060 & 37805 & 118.99 & 6033 & 30 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERE002}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE058 & 2353 & 3284 & 3458 & 146.92 & 1104 & 3 \\
+AGE006 & 6197 & 3468 & 6513 & 105.10 & 316  & 3 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERE002}} & \textbf{1420} & \textbf{6} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERE006}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE010 & 7696 & 7949 & 9096 & 118.19 & 1400 & 9 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- PLATA ---
+\subsection{Sucursal Plata}
+
+\subsubsection{GERP003}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGP014 & 16617 & 4384 & 19641 & 118.20 & 3024 & 6 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===================================================================
+\section{Detalle por Sucursal --- Semana 6 (Febrero 4)}
+
+% --- CAPITAL ---
+\subsection{Sucursal Capital}
+
+\subsubsection{GERC003}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=4.0]S[table-format=5.0]S[table-format=3.2]S[table-format=4.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGC013 & 8789  & 880 & 9669  & 110.01 & 880 & 2 \\
+AGC023 & 39263 & 894 & 39330 & 100.17 & 67  & 2 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERC003}} & \textbf{947} & \textbf{4} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- DINERO ---
+\subsection{Sucursal Dinero}
+
+\subsubsection{GERD009 (3 agencias)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGD076 & 5220  & 5729 & 8736  & 167.37 & 3516 & 9 \\
+AGD066 & 20057 & 5629 & 23053 & 114.94 & 2996 & 10 \\
+AGD067 & 6480  & 3536 & 6617  & 102.11 & 137  & 5 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERD009}} & \textbf{6649} & \textbf{24} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERD011 (2 agencias)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGD078 & 30791 & 10347 & 35898 & 116.59 & 5108 & 17 \\
+AGD073 & 9361  & 453   & 9814  & 104.84 & 453  & 1 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERD011}} & \textbf{5561} & \textbf{18} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- EFECTIVO ---
+\subsection{Sucursal Efectivo}
+
+\subsubsection{GERE001 (2 agencias)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\rowcolors{2}{lightgray}{white}
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE003 & 30656 & 32102 & 35095 & 114.48 & 4440 & 33 \\
+AGE007 & 17182 & 17841 & 19295 & 112.30 & 2113 & 19 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Subtotal GERE001}} & \textbf{6553} & \textbf{52} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERE002}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=4.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE058 & 2353 & 3284 & 2796 & 118.81 & 443 & 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{GERE004}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGE108 & 29970 & 19687 & 35998 & 120.11 & 6028 & 32 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- MONEDA ---
+\subsection{Sucursal Moneda}
+
+\subsubsection{GERM005}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=4.0]S[table-format=5.0]S[table-format=3.2]S[table-format=4.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGM055 & 9365 & 719 & 9502 & 101.47 & 137 & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --- PLATA ---
+\subsection{Sucursal Plata}
+
+\subsubsection{GERP003}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\footnotesize
+\begin{tabular}{lS[table-format=5.0]S[table-format=5.0]S[table-format=5.0]S[table-format=3.2]S[table-format=5.0]r}
+\toprule
+\textbf{Agencia}
+  & {\textbf{D\'eb. Mi\'e}} & {\textbf{D\'eb. Jue}} & {\textbf{Cobranza}}
+  & {\textbf{Rend. Mi\'e}} & {\textbf{Adelanto}} & \textbf{Clientes Adel.} \\
+\midrule
+AGP014 & 16468 & 4649 & 19866 & 120.63 & 3398 & 7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===================================================================
+\section{Detalle por Cliente --- Casos M\'as Relevantes (Semana 6)}
+
+Clientes con \texttt{Dia\_de\_pago = JUEVES} cobrados el \textbf{mi\'ercoles 4 de febrero},
+verificados cruzando \texttt{pagos\_v3} con \texttt{prestamos\_v2}.
+
+% --- EFECTIVO / GERE001 / AGE003 ---
+\subsection{Suc. Efectivo $\rightarrow$ GERE001 $\rightarrow$ AGE003 (33 clientes, \money{23177})}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{lp{5.5cm}lr}
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endhead
+D-3055-ef & Yanet Andrea L\'opez Cruz & JUEVES & \money{1108} \\
+05.26-009-01ef & Jacinto Valente Olmos Balderas & JUEVES & \money{990} \\
+D-2698-ef & Angel Luis Hern\'andez Rodr\'iguez & JUEVES & \money{985} \\
+D-3066-ef & Francisco A. Baltazar Gracia & JUEVES & \money{924} \\
+04.26-00A-01ef & Celia Camacho Barrag\'an & JUEVES & \money{920} \\
+D-2691-ef & Juan Carlos Rodr\'iguez Ortega & JUEVES & \money{862} \\
+01-26-0014-ef & Brenda Areli Baltazar M\'endez & JUEVES & \money{862} \\
+04.26-006-01ef & Gudelia Ort\'iz Mart\'inez & JUEVES & \money{849} \\
+02.26-003-01ef & Laura Isabel Arenas Jim\'enez & JUEVES & \money{849} \\
+03.26-00A-01ef & Zeferino Zenteno S\'anchez & JUEVES & \money{815} \\
+L-10332-ef & Sarayzel S\'anchez Paredes & JUEVES & \money{815} \\
+01-26-0011-ef & Judith Reyes Ram\'irez & JUEVES & \money{815} \\
+03.26-009-01ef & Eberth Cervantes Romero & JUEVES & \money{815} \\
+02.26-008-01ef & Nieves Aurora Rosas Castillo & JUEVES & \money{753} \\
+L-10315-ef & Jos\'e Nazareth S\'anchez Olmos & JUEVES & \money{720} \\
+02.26-007-01ef & Nicol\'as Hern\'andez P\'erez & JUEVES & \money{703} \\
+L-10336-ef & Maricarmen Castillo L\'opez & JUEVES & \money{700} \\
+L-10303-ef & Silvano Torres V\'azquez & JUEVES & \money{648} \\
+02.26-006-01ef & Cristopher E. Celestino Serapio & JUEVES & \money{648} \\
+P-7429-ef & Maximino C. Balderas Carpintero & JUEVES & \money{639} \\
+01-26-0013-ef & Marco Antonio Clemente Cruz & JUEVES & \money{616} \\
+04.26-007-01ef & Lidia Karen Balderas de Jes\'us & JUEVES & \money{609} \\
+V-12224-ef & Mar\'ia Aurora Leyva de la Cruz & JUEVES & \money{585} \\
+04.26-009-01ef & Camila Gabina de Jes\'us Castillo & JUEVES & \money{576} \\
+N-16866-ef & Daniel Gonz\'alez Cortez & JUEVES & \money{530} \\
+L-10308-ef & Catalina L\'opez Ruiz & JUEVES & \money{522} \\
+03.26-006-01ef & Mar\'ia Ang\'elica Valerio Ca\~nedo & JUEVES & \money{520} \\
+V-12217-49-ef & Felisa Josefina Carrera Cruz & JUEVES & \money{520} \\
+02.26-004-01ef & \'Angeles Gabriela Bartolo Serapio & JUEVES & \money{520} \\
+02.26-002-01ef & Patricia Mu\~noz Mu\~noz & JUEVES & \money{454} \\
+P-7447-ef & David Flores Nu\~nez & JUEVES & \money{450} \\
+02.26-005-01ef & Jes\'us Robledo Baltazar & JUEVES & \money{447} \\
+04.26-003-01ef & Emilia A. Ruiz S\'anchez & JUEVES & \money{408} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% --- EFECTIVO / GERE004 / AGE108 ---
+\subsection{Suc. Efectivo $\rightarrow$ GERE004 $\rightarrow$ AGE108 (32 clientes, \money{16765})}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{lp{5.5cm}lr}
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endhead
+02.26-00I-04ef & Gloria Matilde Santiago Marcos & JUEVES & \money{1047} \\
+L-10223-ef & Gabriela O. Evangelista L\'opez & JUEVES & \money{941} \\
+L-9888-ef & Marisela Gonz\'alez V\'azquez & JUEVES & \money{815} \\
+04.26-00C-04ef & Virginia M\'endez Marcelino & JUEVES & \money{720} \\
+L-10202-ef & M\'onica N. de Jes\'us Soriano & JUEVES & \money{690} \\
+L-10215-ef & Micaela Natividad Flores & JUEVES & \money{690} \\
+L-10218-ef & Rosa Itzel Ortega Ram\'irez & JUEVES & \money{690} \\
+V-12122-ef & Mayra de la Rosa Ram\'irez & JUEVES & \money{669} \\
+L-10222-ef & Gloria F. Ben\'itez Isidro & JUEVES & \money{648} \\
+L-9884-ef & Petra Feliciano Marcos & JUEVES & \money{648} \\
+P-7673-ef & Brayan Marcos Nabor Juvencio & JUEVES & \money{529} \\
+02.26-00H-04ef & Ver\'onica M\'endez Marcelino & JUEVES & \money{529} \\
+V-12114-ef & Andrea Santiago de Jes\'us & JUEVES & \money{526} \\
+V-12126-ef & Juan Pablo Garc\'ia de los Santos & JUEVES & \money{520} \\
+V-12131-ef & Mar\'ia Goretti Marcos Natividad & JUEVES & \money{520} \\
+05.26-00D-04ef & Florencia Hern\'andez Cort\'es & JUEVES & \money{520} \\
+05.26-00C-04ef & Leticia Pastrana Hern\'andez & JUEVES & \money{460} \\
+05.26-00I-04ef & Rosa N. Cort\'es de la Rosa & JUEVES & \money{460} \\
+N-16683-ef & Mar\'ia del Carmen Ben\'itez Santiago & JUEVES & \money{454} \\
+04.26-008-04ef & Francisco Javier Cruz Marcos & JUEVES & \money{454} \\
+03.26-00H-04ef & Marco Antonio Cort\'es Espinoza & JUEVES & \money{454} \\
+N-16688-ef & Lucero de la Luz Gonzaga & JUEVES & \money{454} \\
+03.26-00F-04ef & Mar\'ia Gertrudis Hilario Santiago & JUEVES & \money{454} \\
+V-12116-ef & Reina Pastrana Flores & JUEVES & \money{447} \\
+N-16675-ef & Dulce Mar\'ia Ju\'arez Flores & JUEVES & \money{441} \\
+L-10216-49-ef & Claudia Casimiro Ventura & JUEVES & \money{435} \\
+D-3107-ef & Nancy G. Marcos Hern\'andez & JUEVES & \money{429} \\
+03.26-00E-04ef & Candelaria Iba\~nez Amador & JUEVES & \money{304} \\
+6387-A-49-ef & Norberta M. Santiago Juvencio & JUEVES & \money{276} \\
+P-7677-49-ef & Jes\'us Mu\~noz Orea & JUEVES & \money{200} \\
+03.26-00C-04ef & Israel Contreras Santiago & JUEVES & \money{200} \\
+P-7678-49-ef & Eva Pastrana Hern\'andez & JUEVES & \money{141} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% --- DINERO / GERD011 / AGD078 ---
+\subsection{Suc. Dinero $\rightarrow$ GERD011 $\rightarrow$ AGD078 (17 clientes, \money{9296})}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{lp{5.5cm}lr}
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia Pago} & \textbf{Monto} \\
+\midrule
+\endhead
+D-1650-di & Gabriela L\'opez Hern\'andez & JUEVES & \money{849} \\
+D-1648-di & Dulce Caridad \'Angeles Nava & JUEVES & \money{766} \\
+L-12431-di & Elizabeth Ayala Arriaga & JUEVES & \money{720} \\
+D-2396-49-di & Guillermina Castillo Cruz & JUEVES & \money{637} \\
+L-12427-di & Marcela Romano Nolasco & JUEVES & \money{596} \\
+P-6220-49-di & Ma. del Rosario Noche Cuahutle & JUEVES & \money{585} \\
+P-6216-di & Argelia Nava Hern\'andez & JUEVES & \money{585} \\
+L-12243-di & Valeria V\'asquez P\'erez & JUEVES & \money{576} \\
+L-12244-di & Ignacia Cocoletzi Ilhuicatzi & JUEVES & \money{575} \\
+L-12434-di & Antonia Maravilla Corona & JUEVES & \money{540} \\
+L-12429-di & Berenice S\'anchez Maldonado & JUEVES & \money{522} \\
+N-12886-di & Silverio Moreno Lobato & JUEVES & \money{499} \\
+N-12882-di & Ascensi\'on Romano Mixcoatl & JUEVES & \money{491} \\
+04.26-00C-11di & Luz Mar\'ia Flores Mart\'inez & JUEVES & \money{441} \\
+19599-di & Francisco J. Romano Montiel & JUEVES & \money{368} \\
+05.26-004-11di & Mariela Cocoletzi Mozencahua & JUEVES & \money{322} \\
+05.26-005-11di & Gregoria M\'endez de la Fuente & JUEVES & \money{224} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ===================================================================
+\section{Metodolog\'ia}
+
+\subsection{Fuentes de Datos}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{vw\_cobranza\_snapshots\_reportes\_generales}: Vista que cruza
+    \texttt{cobranza\_snapshots} con \texttt{debitos\_historial}. Columnas clave:
+    \texttt{sucursal}, \texttt{gerencia}, \texttt{agencia}, \texttt{rendimiento\_miercoles},
+    \texttt{adelanto\_miercoles}. Filtro: \texttt{dia\_semana\_es = 'Miercoles'}, \texttt{hora = 20}.
+  \item \textbf{pagos\_v3}: Pagos individuales. Filtro por \texttt{Created\_at} del mi\'ercoles
+    de cada semana.
+  \item \textbf{prestamos\_v2}: Pr\'estamos activos. Campo \texttt{Dia\_de\_pago} para verificar
+    que el cliente tiene asignado JUEVES.
+\end{enumerate}
+
+\subsection{Criterios de Detecci\'on}
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{rendimiento\_miercoles} $> 100\%$ en la vista.
+  \item \texttt{adelanto\_miercoles} $> 0$ (monto que excede el d\'ebito del mi\'ercoles).
+  \item Confirmaci\'on con \texttt{pagos\_v3}: existen pagos registrados el mi\'ercoles para
+    clientes cuyo \texttt{Dia\_de\_pago = 'JUEVES'} en \texttt{prestamos\_v2}.
+  \item \textbf{Consistente}: el patr\'on se repite en ambas semanas.
+\end{itemize}
+
+\subsection{F\'ormulas de la Vista}
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{rendimiento\_miercoles} = \texttt{cobranza\_pura} / \texttt{debito\_miercoles} $\times$ 100
+  \item \texttt{adelanto\_miercoles} = MAX(\texttt{cobranza\_pura} $-$ \texttt{debito\_miercoles}, 0)
+  \item \texttt{rendimiento\_jueves} = \texttt{cobranza\_pura} / (\texttt{debito\_mie} + \texttt{debito\_jue}) $\times$ 100
+  \item \texttt{adelanto\_jueves} = MAX(\texttt{cobranza\_pura} $-$ (\texttt{debito\_mie} + \texttt{debito\_jue}), 0)
+\end{itemize}
+
+\end{document}

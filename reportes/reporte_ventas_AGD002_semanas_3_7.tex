@@ -1,0 +1,431 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+\geometry{left=1.5cm, right=1.5cm, top=2.5cm, bottom=2.5cm}
+
+\definecolor{headerblue}{RGB}{41, 65, 122}
+\definecolor{lightgray}{RGB}{240, 240, 240}
+\definecolor{alertred}{RGB}{220, 53, 69}
+\definecolor{warningyellow}{RGB}{255, 193, 7}
+\definecolor{successgreen}{RGB}{40, 167, 69}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{headerblue}{\textbf{Xpress Dinero}} -- Reporte de Ventas}
+\fancyhead[R]{\small AGD002 | GERD006}
+\fancyfoot[C]{\small P\'agina \thepage\ de \pageref{LastPage}}
+\fancyfoot[R]{\small Generado: 19/Feb/2026}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+\begin{document}
+
+% ============================================
+% PORTADA
+% ============================================
+\begin{center}
+\vspace*{2cm}
+{\Huge\textcolor{headerblue}{\textbf{Reporte de Registro de Ventas}}}\\[0.5cm]
+{\LARGE Agencia AGD002 -- Gerencia GERD006}\\[0.3cm]
+{\large Sucursal: Dinero}\\[1.5cm]
+
+\begin{tabular}{ll}
+\textbf{Per\'iodo:} & Semanas 3 a 7 del 2026 \\
+\textbf{Rango de fechas:} & 14/Enero -- 16/Febrero 2026 \\
+\textbf{Total de ventas:} & 36 \\
+\textbf{Monto total colocado:} & \$231,600.00 \\
+\textbf{Fecha de generaci\'on:} & 19 de Febrero de 2026 \\
+\end{tabular}
+
+\vspace{2cm}
+\rule{0.8\textwidth}{0.5pt}
+\end{center}
+
+\newpage
+
+% ============================================
+% RESUMEN EJECUTIVO
+% ============================================
+\section*{\textcolor{headerblue}{Resumen Ejecutivo por Semana}}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{Semana}} &
+\textcolor{white}{\textbf{Ventas}} &
+\textcolor{white}{\textbf{Monto Colocado}} &
+\textcolor{white}{\textbf{Mismo D\'ia}} &
+\textcolor{white}{\textbf{Con Retraso}} &
+\textcolor{white}{\textbf{Retraso M\'ax}} \\
+\hline
+3 & 7 & \$47,000.00 & 7 (100\%) & 0 (0\%) & 0 d\'ias \\
+\hline
+\rowcolor{lightgray}
+4 & 7 & \$37,000.00 & 4 (57\%) & 3 (43\%) & 1 d\'ia \\
+\hline
+5 & 8 & \$47,500.00 & 7 (88\%) & \textcolor{alertred}{\textbf{1 (13\%)}} & \textcolor{alertred}{\textbf{5 d\'ias}} \\
+\hline
+\rowcolor{lightgray}
+6 & 6 & \$48,000.00 & 3 (50\%) & 3 (50\%) & 1 d\'ia \\
+\hline
+7 & 8 & \$59,000.00 & 6 (75\%) & 2 (25\%) & \textcolor{alertred}{\textbf{4 d\'ias}} \\
+\hline
+\hline
+\textbf{Total} & \textbf{36} & \textbf{\$238,500.00} & \textbf{27 (75\%)} & \textbf{9 (25\%)} & \textbf{5 d\'ias} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\subsection*{\textcolor{headerblue}{Observaciones Generales}}
+\begin{itemize}
+    \item El 75\% de las ventas se capturan el \textbf{mismo d\'ia} de la venta.
+    \item El 25\% restante presenta retraso en la captura (1 a 5 d\'ias).
+    \item \textbf{Patr\'on recurrente:} captura tard\'ia en horario nocturno (despu\'es de las 21:00 hrs).
+    \item \textcolor{alertred}{\textbf{Alerta:}} Semana 5 tiene una venta capturada 5 d\'ias despu\'es (NORMA DE GANTE LIRA).
+    \item \textcolor{alertred}{\textbf{Alerta:}} Semana 7 tiene una venta capturada 4 d\'ias despu\'es (MA. DOLORES MORENO VAZQUEZ).
+\end{itemize}
+
+\newpage
+
+% ============================================
+% SEMANA 3
+% ============================================
+\section*{\textcolor{headerblue}{Semana 3 (14--16 Enero 2026)}}
+\textbf{7 ventas} | Monto colocado: \$47,000.00 | \textcolor{successgreen}{0 con retraso}
+
+\vspace{0.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{|c|l|l|r|l|l|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{\#}} &
+\textcolor{white}{\textbf{Cliente}} &
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Monto}} &
+\textcolor{white}{\textbf{D\'ia Venta}} &
+\textcolor{white}{\textbf{Captura (MX)}} &
+\textcolor{white}{\textbf{Retraso}} \\
+\hline
+1 & KARINA ROMAN MORENO & VIP & \$7,000 & Mi\'e 14/Ene & Mi\'e 14/Ene 21:51 & 0 \\
+\hline
+\rowcolor{lightgray}
+2 & MA. DE LOURDES FLORES JIMENEZ & DIAMANTE & \$10,000 & Mi\'e 14/Ene & Mi\'e 14/Ene 21:55 & 0 \\
+\hline
+3 & MIGUEL ZARATE LOPEZ & VIP & \$6,000 & Jue 15/Ene & Jue 15/Ene 22:39 & 0 \\
+\hline
+\rowcolor{lightgray}
+4 & LUCY LUMBRERAS DELGADO & NUEVO & \$5,000 & Jue 15/Ene & Jue 15/Ene 22:39 & 0 \\
+\hline
+5 & MARCO A. HERNANDEZ TORRES & LEAL & \$5,000 & Vie 16/Ene & Vie 16/Ene 22:58 & 0 \\
+\hline
+\rowcolor{lightgray}
+6 & MA. SILVIA CASTILLO COVA & VIP & \$6,000 & Vie 16/Ene & Vie 16/Ene 22:59 & 0 \\
+\hline
+7 & COLUMBA A. GARCIA PEREZ & DIAMANTE & \$8,000 & Vie 16/Ene & Vie 16/Ene 22:59 & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.2cm}
+\textit{Nota: Todas las capturas fueron el mismo d\'ia pero en horario nocturno ($\sim$22:00--23:00 hrs).}
+
+% ============================================
+% SEMANA 4
+% ============================================
+\section*{\textcolor{headerblue}{Semana 4 (21--23 Enero 2026)}}
+\textbf{7 ventas} | Monto colocado: \$37,000.00 | \textcolor{warningyellow}{3 con retraso (1 d\'ia)}
+
+\vspace{0.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{|c|l|l|r|l|l|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{\#}} &
+\textcolor{white}{\textbf{Cliente}} &
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Monto}} &
+\textcolor{white}{\textbf{D\'ia Venta}} &
+\textcolor{white}{\textbf{Captura (MX)}} &
+\textcolor{white}{\textbf{Retraso}} \\
+\hline
+1 & CAROLINA FLORES MORALES & DIAMANTE & \$6,600 & Mi\'e 21/Ene & Mi\'e 21/Ene 23:09 & 0 \\
+\hline
+\rowcolor{lightgray}
+2 & MONICA ROMANO LOPEZ & LEAL & \$10,000 & Mi\'e 21/Ene & Mi\'e 21/Ene 23:10 & 0 \\
+\hline
+3 & LUZ AVILA GARCIA & LEAL & \$7,000 & Mi\'e 21/Ene & Mi\'e 21/Ene 23:11 & 0 \\
+\hline
+\rowcolor{lightgray}
+4 & ADELA HERNANDEZ HERRERA & NUEVO & \$3,000 & Jue 22/Ene & \textcolor{alertred}{Vie 23/Ene 08:33} & \textcolor{alertred}{1} \\
+\hline
+5 & AMELIA HERNANDEZ RODRIGUEZ & NUEVO & \$3,000 & Jue 22/Ene & \textcolor{alertred}{Vie 23/Ene 08:33} & \textcolor{alertred}{1} \\
+\hline
+\rowcolor{lightgray}
+6 & MA. PAULA HERNANDEZ RODRIGUEZ & NUEVO & \$3,000 & Jue 22/Ene & \textcolor{alertred}{Vie 23/Ene 08:34} & \textcolor{alertred}{1} \\
+\hline
+7 & JESSICA LIBRADO HERNANDEZ & NOBEL & \$4,500 & Vie 23/Ene & Vie 23/Ene 21:51 & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.2cm}
+\textit{Nota: 3 ventas del jueves se capturaron la ma\~nana siguiente (viernes 08:33).}
+
+% ============================================
+% SEMANA 5
+% ============================================
+\section*{\textcolor{headerblue}{Semana 5 (28--30 Enero 2026)}}
+\textbf{8 ventas} | Monto colocado: \$47,500.00 | \textcolor{alertred}{1 con retraso de 5 d\'ias}
+
+\vspace{0.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{|c|l|l|r|l|l|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{\#}} &
+\textcolor{white}{\textbf{Cliente}} &
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Monto}} &
+\textcolor{white}{\textbf{D\'ia Venta}} &
+\textcolor{white}{\textbf{Captura (MX)}} &
+\textcolor{white}{\textbf{Retraso}} \\
+\hline
+1 & MARTHA HERNANDEZ GODOS & LEAL & \$8,000 & Mi\'e 28/Ene & Mi\'e 28/Ene 21:57 & 0 \\
+\hline
+\rowcolor{lightgray}
+2 & GUADALUPE NAVA CANO & LEAL & \$4,000 & Mi\'e 28/Ene & Mi\'e 28/Ene 21:58 & 0 \\
+\hline
+3 & CLARA PANTOJA GALAVIZ & PREMIUM & \$7,500 & Jue 29/Ene & Jue 29/Ene 22:24 & 0 \\
+\hline
+\rowcolor{lightgray}
+4 & GABRIELA MORALES HERNANDEZ & PREMIUM & \$7,500 & Jue 29/Ene & Jue 29/Ene 22:27 & 0 \\
+\hline
+5 & MA. BALBINA MILA RAMIREZ & PREMIUM & \$7,500 & Jue 29/Ene & Jue 29/Ene 22:29 & 0 \\
+\hline
+\rowcolor{lightgray}
+6 & CATERIN GARCIA PAZ & DIAMANTE & \$10,000 & Jue 29/Ene & Jue 29/Ene 22:42 & 0 \\
+\hline
+7 & FATIMA MU\~NOZ CEBADA & NOBEL & \$3,000 & Jue 29/Ene & Jue 29/Ene 22:42 & 0 \\
+\hline
+\rowcolor{lightgray}
+8 & \textcolor{alertred}{\textbf{NORMA DE GANTE LIRA}} & LEAL & \$4,000 & Mi\'e 28/Ene & \textcolor{alertred}{\textbf{Lun 02/Feb 11:34}} & \textcolor{alertred}{\textbf{5}} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.2cm}
+\textit{\textcolor{alertred}{Alerta: NORMA DE GANTE LIRA -- venta del mi\'ercoles capturada hasta el lunes siguiente (5 d\'ias despu\'es).}}
+
+\newpage
+
+% ============================================
+% SEMANA 6
+% ============================================
+\section*{\textcolor{headerblue}{Semana 6 (04--06 Febrero 2026)}}
+\textbf{6 ventas} | Monto colocado: \$48,000.00 | \textcolor{warningyellow}{3 con retraso (1 d\'ia)}
+
+\vspace{0.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{|c|l|l|r|l|l|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{\#}} &
+\textcolor{white}{\textbf{Cliente}} &
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Monto}} &
+\textcolor{white}{\textbf{D\'ia Venta}} &
+\textcolor{white}{\textbf{Captura (MX)}} &
+\textcolor{white}{\textbf{Retraso}} \\
+\hline
+1 & MA. DOLORES GONZAGA AGUILAR & DIAMANTE & \$13,500 & Mi\'e 04/Feb & Mi\'e 04/Feb 18:18 & 0 \\
+\hline
+\rowcolor{lightgray}
+2 & VIRIDIANA HERNANDEZ RAMIREZ & DIAMANTE & \$13,000 & Mi\'e 04/Feb & Mi\'e 04/Feb 18:19 & 0 \\
+\hline
+3 & JESUS RENE PREZA JUSTO & PREMIUM & \$7,000 & Mi\'e 04/Feb & Mi\'e 04/Feb 18:21 & 0 \\
+\hline
+\rowcolor{lightgray}
+4 & ROSA MARIA SALDA\~NA DIAZ & NOBEL & \$3,000 & Jue 05/Feb & \textcolor{alertred}{Vie 06/Feb 09:09} & \textcolor{alertred}{1} \\
+\hline
+5 & FRANCISCO J. ROMERO BAEZ & LEAL & \$8,000 & Jue 05/Feb & \textcolor{alertred}{Vie 06/Feb 09:10} & \textcolor{alertred}{1} \\
+\hline
+\rowcolor{lightgray}
+6 & MA. LETICIA SANCHEZ GALINDO & VIP & \$3,500 & Jue 05/Feb & \textcolor{alertred}{Vie 06/Feb 09:12} & \textcolor{alertred}{1} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.2cm}
+\textit{Nota: 3 ventas del jueves se capturaron la ma\~nana del viernes ($\sim$09:10 hrs).}
+
+% ============================================
+% SEMANA 7
+% ============================================
+\section*{\textcolor{headerblue}{Semana 7 (11--16 Febrero 2026)}}
+\textbf{8 ventas} | Monto colocado: \$59,000.00 | \textcolor{alertred}{2 con retraso (1 y 4 d\'ias)}
+
+\vspace{0.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{|c|l|l|r|l|l|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{\#}} &
+\textcolor{white}{\textbf{Cliente}} &
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Monto}} &
+\textcolor{white}{\textbf{D\'ia Venta}} &
+\textcolor{white}{\textbf{Captura (MX)}} &
+\textcolor{white}{\textbf{Retraso}} \\
+\hline
+1 & JULIA DE LOS SANTOS CAUTE & DIAMANTE & \$8,000 & Mi\'e 11/Feb & Mi\'e 11/Feb 12:48 & 0 \\
+\hline
+\rowcolor{lightgray}
+2 & CATALINA GONZALEZ MAXIMO & VIP & \$6,000 & Mi\'e 11/Feb & Mi\'e 11/Feb 22:51 & 0 \\
+\hline
+3 & JOSE AARON VAZQUEZ CHAVEZ & DIAMANTE & \$8,000 & Jue 12/Feb & Jue 12/Feb 22:06 & 0 \\
+\hline
+\rowcolor{lightgray}
+4 & ALFREDO LOPEZ FLORES & LEAL & \$8,000 & Jue 12/Feb & Jue 12/Feb 22:06 & 0 \\
+\hline
+5 & JOSE ALBERTO SALDA\~NA ZU\~NIGA & VIP & \$6,000 & Jue 12/Feb & Jue 12/Feb 22:07 & 0 \\
+\hline
+\rowcolor{lightgray}
+6 & PASCUALA CORONA GARCIA & NUEVO & \$3,000 & Jue 12/Feb & Jue 12/Feb 22:12 & 0 \\
+\hline
+7 & JUAN JOSE LOPEZ LEAL & DIAMANTE & \$8,000 & Vie 13/Feb & \textcolor{alertred}{S\'ab 14/Feb 09:10} & \textcolor{alertred}{1} \\
+\hline
+\rowcolor{lightgray}
+8 & \textcolor{alertred}{\textbf{MA. DOLORES MORENO VAZQUEZ}} & DIAMANTE & \$12,000 & Jue 12/Feb & \textcolor{alertred}{\textbf{Lun 16/Feb 13:24}} & \textcolor{alertred}{\textbf{4}} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.2cm}
+\textit{\textcolor{alertred}{Alerta: MA. DOLORES MORENO VAZQUEZ -- venta del jueves capturada hasta el lunes (4 d\'ias despu\'es).}}
+
+\newpage
+
+% ============================================
+% ANALISIS DE PATRONES
+% ============================================
+\section*{\textcolor{headerblue}{An\'alisis de Patrones de Captura}}
+
+\subsection*{Distribuci\'on por Horario de Captura}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{Rango Horario}} &
+\textcolor{white}{\textbf{Ventas}} &
+\textcolor{white}{\textbf{Porcentaje}} \\
+\hline
+08:00 -- 12:00 (Ma\~nana) & 7 & 19\% \\
+\hline
+\rowcolor{lightgray}
+12:00 -- 18:00 (Mediod\'ia) & 4 & 11\% \\
+\hline
+18:00 -- 21:00 (Tarde) & 3 & 8\% \\
+\hline
+\rowcolor{lightgray}
+\textbf{21:00 -- 23:59 (Noche)} & \textbf{22} & \textbf{61\%} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.3cm}
+\textbf{Hallazgo principal:} El 61\% de las ventas se capturan despu\'es de las 21:00 hrs, lo que sugiere que el agente registra las ventas al final de su jornada laboral en lote.
+
+\subsection*{Distribuci\'on por D\'ias de Retraso}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{Retraso}} &
+\textcolor{white}{\textbf{Ventas}} &
+\textcolor{white}{\textbf{Porcentaje}} \\
+\hline
+\textcolor{successgreen}{0 d\'ias (mismo d\'ia)} & 27 & 75\% \\
+\hline
+\rowcolor{lightgray}
+\textcolor{warningyellow}{1 d\'ia} & 7 & 19\% \\
+\hline
+\textcolor{alertred}{4 d\'ias} & 1 & 3\% \\
+\hline
+\rowcolor{lightgray}
+\textcolor{alertred}{5 d\'ias} & 1 & 3\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection*{Nivel de Cr\'edito Colocado}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|r|c|}
+\hline
+\rowcolor{headerblue}
+\textcolor{white}{\textbf{Nivel}} &
+\textcolor{white}{\textbf{Cantidad}} &
+\textcolor{white}{\textbf{Monto Total}} &
+\textcolor{white}{\textbf{Promedio}} \\
+\hline
+DIAMANTE & 11 & \$103,100.00 & \$9,372.73 \\
+\hline
+\rowcolor{lightgray}
+PREMIUM & 4 & \$29,500.00 & \$7,375.00 \\
+\hline
+LEAL & 7 & \$46,000.00 & \$6,571.43 \\
+\hline
+\rowcolor{lightgray}
+VIP & 6 & \$34,500.00 & \$5,750.00 \\
+\hline
+NOBEL & 3 & \$10,500.00 & \$3,500.00 \\
+\hline
+\rowcolor{lightgray}
+NUEVO & 5 & \$17,000.00 & \$3,400.00 \\
+\hline
+\hline
+\textbf{TOTAL} & \textbf{36} & \textbf{\$240,600.00} & \textbf{\$6,683.33} \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+\rule{0.6\textwidth}{0.3pt}\\[0.3cm]
+\textit{Reporte generado autom\'aticamente -- Xpress Dinero 2026}
+\end{center}
+
+\end{document}

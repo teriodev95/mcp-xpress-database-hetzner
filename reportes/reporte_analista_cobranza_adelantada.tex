@@ -1,0 +1,1331 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{pdflscape}
+
+\geometry{margin=1.8cm, top=2.8cm, bottom=2.2cm}
+
+\definecolor{xpressblue}{RGB}{31, 78, 121}
+\definecolor{xpressgray}{RGB}{89, 89, 89}
+\definecolor{alertred}{RGB}{192, 0, 0}
+\definecolor{lightgray}{RGB}{242, 242, 242}
+\definecolor{lightblue}{RGB}{220, 235, 250}
+
+\titleformat{\section}{\Large\bfseries\color{xpressblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{xpressgray}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{xpressgray}}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{xpressgray}Xpress Dinero - Reporte Analista Cobranza Adelantada}
+\fancyhead[R]{\small\color{xpressgray}Semanas 5--6 / 2026}
+\fancyfoot[C]{\small\color{xpressgray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\sisetup{
+  group-separator={,},
+  group-minimum-digits=4,
+  output-decimal-marker={.},
+  round-mode=places,
+  round-precision=2
+}
+
+\newcommand{\money}[1]{\$\num{#1}}
+
+\begin{document}
+
+\thispagestyle{empty}
+\vspace*{3cm}
+\begin{center}
+  {\Huge\bfseries\color{xpressblue} Reporte T\'ecnico de An\'alisis}\\[0.5cm]
+  {\Huge\bfseries\color{xpressblue} Cobranza Adelantada}\\[1.5cm]
+  {\Large\color{xpressgray} An\'alisis de Datos, Metodolog\'ia SQL\\y M\'etricas de Rendimiento}\\[2.5cm]
+  {\large Semanas 5 y 6 del 2026}\\[0.3cm]
+  {\large Enero 28 --- Febrero 7, 2026}\\[3cm]
+  {\normalsize\color{xpressgray} Generado el 6 de febrero de 2026}\\[0.3cm]
+  {\normalsize\color{xpressgray} Fuentes: \texttt{vw\_cobranza\_snapshots\_reportes\_generales},
+  \texttt{pagos\_v3}, \texttt{prestamos\_v2}, \texttt{debitos\_historial}}
+\end{center}
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Resumen Ejecutivo}
+
+Se detect\'o \textbf{cobranza adelantada} en m\'ultiples agencias: agentes cobran
+clientes de \texttt{Dia\_de\_pago = 'JUEVES'} durante el mi\'ercoles, inflando
+\texttt{rendimiento\_miercoles} por encima del 100\%.
+
+\subsection{M\'etricas Clave}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lrr}
+\toprule
+\textbf{M\'etrica} & \textbf{Semana 5} & \textbf{Semana 6} \\
+\midrule
+Agencias con adelanto & 17 & 17 \\
+Clientes jueves cobrados mi\'ercoles & 169 & 168 \\
+Monto total adelantado & \money{99763} & \money{98641} \\
+Agencias consistentes (ambas sem.) & \multicolumn{2}{c}{17} \\
+
+\bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+
+\section{Metodolog\'ia T\'ecnica}
+
+\subsection{Fuentes de Datos}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{vw\_cobranza\_snapshots\_reportes\_generales}: Vista principal que cruza
+    \texttt{cobranza\_snapshots} con \texttt{debitos\_historial} (desglosados por d\'ia).
+    Columnas clave: \texttt{rendimiento\_miercoles}, \texttt{adelanto\_miercoles},
+    \texttt{sucursal}, \texttt{gerencia}.
+  \item \textbf{debitos\_historial}: D\'ebitos desglosados por d\'ia de la semana
+    (\texttt{debito\_miercoles}, \texttt{debito\_jueves}, \texttt{debito\_viernes}).
+  \item \textbf{pagos\_v3}: Pagos individuales ($\sim$3.5M registros). Filtro por
+    \texttt{Created\_at} del mi\'ercoles.
+  \item \textbf{prestamos\_v2}: Pr\'estamos activos. Campo \texttt{Dia\_de\_pago}
+    verifica que el cliente tiene asignado JUEVES.
+  \item \textbf{prestamos\_completados}: Pr\'estamos ya liquidados (fallback para
+    clientes migrados).
+\end{enumerate}
+
+\subsection{Detecci\'on de Adelanto}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \texttt{rendimiento\_miercoles} $> 100\%$ en la vista indica que la cobranza
+    supera el d\'ebito del mi\'ercoles.
+  \item \texttt{adelanto\_miercoles} $> 0$ cuantifica el excedente.
+  \item Confirmaci\'on cruzada: pagos en \texttt{pagos\_v3} registrados el mi\'ercoles
+    donde \texttt{Dia\_de\_pago = 'JUEVES'} en \texttt{prestamos\_v2}.
+\end{enumerate}
+
+\subsection{F\'ormulas de la Vista}
+
+\begin{itemize}[leftmargin=2em]
+  \item $\texttt{rendimiento\_mie} = \frac{\texttt{cobranza\_pura}}{\texttt{debito\_miercoles}} \times 100$
+  \item $\texttt{rendimiento\_jue} = \frac{\texttt{cobranza\_pura}}{\texttt{debito\_mie} + \texttt{debito\_jue}} \times 100$
+  \item $\texttt{rendimiento\_vie} = \frac{\texttt{cobranza\_pura}}{\texttt{debito\_mie} + \texttt{debito\_jue} + \texttt{debito\_vie}} \times 100$
+  \item $\texttt{adelanto\_mie} = \max(\texttt{cobranza\_pura} - \texttt{debito\_mie}, 0)$
+  \item $\texttt{adelanto\_jue} = \max(\texttt{cobranza\_pura} - (\texttt{debito\_mie} + \texttt{debito\_jue}), 0)$
+  \item $\texttt{faltante\_mie} = \max(\texttt{debito\_mie} - \texttt{cobranza\_pura}, 0)$
+\end{itemize}
+
+\subsection{Query de Verificaci\'on de Clientes}
+
+\begin{verbatim}
+SELECT pv.PrestamoID,
+       CONCAT(pv.Nombres,' ',pv.Apellido_Paterno,' ',
+              pv.Apellido_Materno) AS cliente,
+       pv.Dia_de_pago, p.Monto, p.Tipo,
+       pv.Agente AS agencia
+FROM pagos_v3 p
+INNER JOIN prestamos_v2 pv
+  ON p.PrestamoID = pv.PrestamoID
+WHERE pv.Dia_de_pago = 'JUEVES'
+  AND pv.Agente IN (...)
+  AND DATE(CONVERT_TZ(p.Created_at,
+       'UTC','America/Mexico_City')) = '2026-02-04'
+  AND p.Tipo NOT IN ('No_pago','Multa','Visita')
+ORDER BY pv.Agente, p.Monto DESC
+\end{verbatim}
+
+\subsection{Collation}
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{debitos\_historial.agencia}: \texttt{utf8mb4\_unicode\_ci}
+  \item \texttt{cobranza\_snapshots.agencia}: \texttt{utf8mb4\_general\_ci}
+  \item \texttt{agencias.AgenciaID}: \texttt{utf8\_general\_ci}
+  \item JOIN en vista: \texttt{dh.agencia COLLATE utf8mb4\_general\_ci = cs.agencia}
+\end{itemize}
+
+\newpage
+
+\section{M\'etricas de Snapshot por Agencia}
+
+Datos de \texttt{vw\_cobranza\_snapshots\_reportes\_generales}, mi\'ercoles hora 20.
+
+\subsection{Semana 5}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{llrrrrrrrr}
+\toprule
+\textbf{Suc.} & \textbf{Agencia}
+  & {\textbf{D\'eb.Mie}} & {\textbf{D\'eb.Jue}} & {\textbf{Cobr.Pura}}
+  & {\textbf{Rend.Mie}} & {\textbf{Rend.Jue}}
+  & {\textbf{Adel.Mie}} & {\textbf{Falt.Jue}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Suc.} & \textbf{Agencia}
+  & {\textbf{D\'eb.Mie}} & {\textbf{D\'eb.Jue}} & {\textbf{Cobr.Pura}}
+  & {\textbf{Rend.Mie}} & {\textbf{Rend.Jue}}
+  & {\textbf{Adel.Mie}} & {\textbf{Falt.Jue}} \\
+\midrule
+\endhead
+capital & AGC013 & \money{8789} & \money{880} & \money{9669} & 110.01\% & 100.00\% & \money{880} & \money{0} \\
+dinero & AGD066 & \money{20854} & \money{6149} & \money{24763} & 118.74\% & 91.70\% & \money{3909} & \money{2240} \\
+dinero & AGD067 & \money{6999} & \money{4288} & \money{11287} & 161.26\% & 100.00\% & \money{4288} & \money{0} \\
+dinero & AGD076 & \money{6148} & \money{5729} & \money{8285} & 134.75\% & 69.76\% & \money{2137} & \money{3592} \\
+dinero & AGD085 & \money{18390} & \money{6919} & \money{18987} & 103.25\% & 75.02\% & \money{597} & \money{6322} \\
+dinero & AGD086 & \money{5972} & \money{4342} & \money{7543} & 126.31\% & 73.13\% & \money{1571} & \money{2771} \\
+dinero & AGD078 & \money{31132} & \money{10051} & \money{33848} & 108.72\% & 82.19\% & \money{2716} & \money{7335} \\
+efectivo & AGE003 & \money{31771} & \money{32060} & \money{37804} & 118.99\% & 59.23\% & \money{6033} & \money{26027} \\
+efectivo & AGE006 & \money{6197} & \money{3468} & \money{6513} & 105.10\% & 67.39\% & \money{316} & \money{3152} \\
+efectivo & AGE058 & \money{2353} & \money{3284} & \money{3458} & 146.92\% & 61.34\% & \money{1104} & \money{2180} \\
+efectivo & AGE010 & \money{7696} & \money{7949} & \money{9096} & 118.19\% & 58.14\% & \money{1400} & \money{6548} \\
+plata & AGP014 & \money{16617} & \money{4384} & \money{19641} & 118.20\% & 93.52\% & \money{3024} & \money{1360} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Semana 6}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{llrrrrrrrr}
+\toprule
+\textbf{Suc.} & \textbf{Agencia}
+  & {\textbf{D\'eb.Mie}} & {\textbf{D\'eb.Jue}} & {\textbf{Cobr.Pura}}
+  & {\textbf{Rend.Mie}} & {\textbf{Rend.Jue}}
+  & {\textbf{Adel.Mie}} & {\textbf{Falt.Jue}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Suc.} & \textbf{Agencia}
+  & {\textbf{D\'eb.Mie}} & {\textbf{D\'eb.Jue}} & {\textbf{Cobr.Pura}}
+  & {\textbf{Rend.Mie}} & {\textbf{Rend.Jue}}
+  & {\textbf{Adel.Mie}} & {\textbf{Falt.Jue}} \\
+\midrule
+\endhead
+capital & AGC013 & \money{8789} & \money{880} & \money{9669} & 110.01\% & 100.00\% & \money{880} & \money{0} \\
+capital & AGC023 & \money{39263} & \money{894} & \money{39330} & 100.17\% & 97.94\% & \money{67} & \money{827} \\
+dinero & AGD066 & \money{20057} & \money{5629} & \money{23053} & 114.94\% & 89.75\% & \money{2996} & \money{2633} \\
+dinero & AGD067 & \money{6480} & \money{3536} & \money{6617} & 102.11\% & 66.06\% & \money{137} & \money{3400} \\
+dinero & AGD076 & \money{5220} & \money{5729} & \money{8736} & 167.37\% & 79.79\% & \money{3516} & \money{2212} \\
+dinero & AGD073 & \money{9361} & \money{453} & \money{9814} & 104.84\% & 100.00\% & \money{453} & \money{0} \\
+dinero & AGD078 & \money{30791} & \money{10347} & \money{35898} & 116.59\% & 87.26\% & \money{5108} & \money{5239} \\
+efectivo & AGE003 & \money{30656} & \money{32102} & \money{35095} & 114.48\% & 55.92\% & \money{4440} & \money{27662} \\
+efectivo & AGE007 & \money{17182} & \money{17841} & \money{19295} & 112.30\% & 55.09\% & \money{2113} & \money{15729} \\
+efectivo & AGE058 & \money{2353} & \money{3284} & \money{2796} & 118.81\% & 49.60\% & \money{443} & \money{2841} \\
+efectivo & AGE108 & \money{29970} & \money{19687} & \money{35998} & 120.11\% & 72.49\% & \money{6028} & \money{13660} \\
+moneda & AGM055 & \money{9365} & \money{719} & \money{9502} & 101.47\% & 94.23\% & \money{137} & \money{582} \\
+plata & AGP014 & \money{16468} & \money{4649} & \money{19866} & 120.63\% & 94.08\% & \money{3398} & \money{1251} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+
+\newpage
+\section{Detalle por Cliente --- Semana 5 (Mi\'ercoles 28 de Enero 2026)}
+
+\subsection{Sucursal Capital}
+
+\subsubsection{GERC003 $\rightarrow$ AGC013 --- Máximo Hernández (2 cli., \money{881})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-7084-49-ca & Hilda Fernanda Marcito Mora & JUEVES & Excedente & \money{478} \\
+2 & V-6273-49-ca & Maricarmen De Jesus Lopez & JUEVES & Excedente & \money{403} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERC003 $\rightarrow$ AGC023 --- Dora Maria Gutierrez (2 cli., \money{904})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & N-9417-49-ca & Silvia Ayala Flores & JUEVES & Excedente & \money{454} \\
+2 & P-4509-49-ca & Diana Rojas Cosme & JUEVES & Excedente & \money{450} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Dinero}
+
+\subsubsection{GERD009 $\rightarrow$ AGD066 --- Bertha Visuel (10 cli., \money{5776})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 02.26-00E-09di & Getzabel Lopez Flores & JUEVES & Excedente & \money{857} \\
+2 & 02.26-00A-09di & Isamar Najera Curiel & JUEVES & Excedente & \money{650} \\
+3 & P-6631-di & Silvia Canuto De La Cruz & JUEVES & Excedente & \money{636} \\
+4 & 02.26-00C-09di & Liliana Maribel Zarate Castillo & JUEVES & Excedente & \money{600} \\
+5 & 02.26-002-09di & Sonia Castañeda Islas & JUEVES & Excedente & \money{550} \\
+6 & 04.26-004-09di & Maria Lency Rivas Sanchez & JUEVES & Excedente & \money{537} \\
+7 & P-6648-di & Marlen Espinoza Hernandez & JUEVES & Excedente & \money{529} \\
+8 & 02.26-009-09di & Areli Gonzalez Vazquez & JUEVES & Excedente & \money{529} \\
+9 & 19618-di & Joana Galvez Sanchez & JUEVES & Excedente & \money{368} \\
+10 & V-9092-di & Antonia Badillo Hernandez & JUEVES & Pago & \money{520} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD067 --- Itzel Yareli Martinez (7 cli., \money{4307})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-12610-di & Kimberly Bertha Carmona Vazquez & JUEVES & Excedente & \money{720} \\
+2 & L-12175-di & Maria Nayeli Cova Tenopala & JUEVES & Excedente & \money{626} \\
+3 & L-12174-di & Aline Michelle Carmona Camacho & JUEVES & Excedente & \money{626} \\
+4 & P-6644-di & Lizbeth Camacho Sanchez & JUEVES & Excedente & \money{600} \\
+5 & N-12836-di & Josefina Romero Martinez & JUEVES & Excedente & \money{529} \\
+6 & N-12848-di & Reyna Abigail Balderas Garcia & JUEVES & Excedente & \money{454} \\
+7 & D-3005-di & Fanny Elizabeth España Torres & JUEVES & Reducido & \money{752} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD076 --- Vacante (11 cli., \money{5745})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & V-9238-di & Josefina Vargas Alonso & JUEVES & Pago & \money{647} \\
+2 & P-6636-di & Estela Garcia Araoz & JUEVES & Pago & \money{636} \\
+3 & L-12826-di & Buenaventura Cruz Morales & JUEVES & Pago & \money{612} \\
+4 & L-12170-di & Adriana Castro Roldan & JUEVES & Pago & \money{576} \\
+5 & 02.26-00K-09di & Francisco Fernando Cortes Marquez & JUEVES & Pago & \money{558} \\
+6 & V-9237-di & Maria Clara Landeros Juarez & JUEVES & Pago & \money{537} \\
+7 & V-9250-49-di & Amairani Zeltzin Sanchez Rodriguez & JUEVES & Pago & \money{500} \\
+8 & N-12845-di & Elizabeth Rodriguez Jimenez & JUEVES & Pago & \money{500} \\
+9 & 19812-49-di & Jose Antonio Cruz Bastida & JUEVES & Pago & \money{460} \\
+10 & N-12846-di & Vicente Trilla Hernandez & JUEVES & Pago & \money{454} \\
+11 & 02.26-00M-09di & Yahir Mejia Cuatepotzo & JUEVES & Pago & \money{265} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD085 --- Blanca Estela Rivera (10 cli., \money{5826})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & V-9171-di & Paulina Alvarez Garcia & JUEVES & Excedente & \money{647} \\
+2 & 03.26-00L-09di & Victor Hugo Rivera Espejel & JUEVES & Excedente & \money{647} \\
+3 & V-9168-di & Diego Vargas Lopez & JUEVES & Excedente & \money{647} \\
+4 & L-12612-di & Karina Rivera Rivera & JUEVES & Excedente & \money{626} \\
+5 & V-9173-di & Lucia Rocha Hernandez & JUEVES & Excedente & \money{595} \\
+6 & P-6642-di & Maria Silvia Silverio Gonzalez & JUEVES & Excedente & \money{585} \\
+7 & V-9234-di & Maria Elizabeth Gonzalez Meneses & JUEVES & Excedente & \money{537} \\
+8 & V-9233-di & Jose Jesus Portilla Alvarez & JUEVES & Excedente & \money{537} \\
+9 & N-12840-di & Reina Claudia Labastida Hernandez & JUEVES & Excedente & \money{499} \\
+10 & P-6499-di & Karla Berenice Perez Sosa & JUEVES & Reducido & \money{506} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD086 --- Ivonne Hernández (7 cli., \money{3569})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 04.26-009-09di & Maria Cristina Madin Roldan & JUEVES & Excedente & \money{610} \\
+2 & P-6643-di & Francisca Alvarado Palacios & JUEVES & Excedente & \money{600} \\
+3 & V-9230-di & Victoria Velasquez Garcia & JUEVES & Excedente & \money{595} \\
+4 & N-12844-di & Yanet Irene Sierra Hernandez & JUEVES & Excedente & \money{500} \\
+5 & 19619-di & Patricia Cabrera Luna & JUEVES & Excedente & \money{460} \\
+6 & P-6647-di & Jennifer Roldan Hidalgo & JUEVES & Excedente & \money{441} \\
+7 & 03.26-00E-09di & Maria Adriana Cruz Lira & JUEVES & Excedente & \money{363} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD011 $\rightarrow$ AGD073 --- Luis Salazar (1 cli., \money{453})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & N-12884-di & Teofila Hernandez Nava & JUEVES & Excedente & \money{453} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD011 $\rightarrow$ AGD078 --- Alejandra Chamorro (15 cli., \money{8777})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-1650-di & Gabriela Lopez Hernandez & JUEVES & Excedente & \money{849} \\
+2 & D-1648-di & Dulce Caridad Angeles Nava & JUEVES & Excedente & \money{771} \\
+3 & L-12431-di & Elizabeth Ayala Arriaga & JUEVES & Excedente & \money{720} \\
+4 & D-2396-49-di & Guillermina Castillo Cruz & JUEVES & Excedente & \money{637} \\
+5 & L-12427-di & Marcela Romano Nolasco & JUEVES & Excedente & \money{609} \\
+6 & P-6220-49-di & Ma. Del Rosario Noche Cuahutle & JUEVES & Excedente & \money{585} \\
+7 & P-6216-di & Argelia Nava Hernandez & JUEVES & Excedente & \money{585} \\
+8 & L-12244-di & Ignacia Cocoletzi Ilhuicatzi & JUEVES & Excedente & \money{576} \\
+9 & L-12243-di & Valeria Vasquez Perez & JUEVES & Excedente & \money{576} \\
+10 & L-12434-di & Antonia Maravilla Corona & JUEVES & Excedente & \money{540} \\
+11 & L-12429-di & Berenice Sanchez Maldonado & JUEVES & Excedente & \money{522} \\
+12 & N-12886-di & Silverio Moreno Lobato & JUEVES & Excedente & \money{499} \\
+13 & N-12882-di & Ascencion Romano Mixcoatl & JUEVES & Excedente & \money{499} \\
+14 & 04.26-00C-11di & Luz Maria Flores Martinez & JUEVES & Excedente & \money{441} \\
+15 & 19599-di & Francisco Javier Romano Montiel & JUEVES & Excedente & \money{368} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Efectivo}
+
+\subsubsection{GERE001 $\rightarrow$ AGE003 --- Maria Maricela Lechuga (32 cli., \money{22034})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-3055-ef & Yanet Andrea Lopez Cruz & JUEVES & Excedente & \money{1108} \\
+2 & D-2698-ef & Angel Luis Hernandez Rodriguez & JUEVES & Excedente & \money{985} \\
+3 & D-3066-ef & Francisco Acencion Baltazar Gracia & JUEVES & Excedente & \money{924} \\
+4 & L-10324-49-ef & Jazmin Adriana Balderas Rojas & JUEVES & Excedente & \money{878} \\
+5 & D-2691-ef & Juan Carlos Rodriguez Ortega & JUEVES & Excedente & \money{862} \\
+6 & 01-26-0014-ef & Brenda Areli Baltazar Mendez & JUEVES & Excedente & \money{862} \\
+7 & 02.26-003-01ef & Laura Isabel Arenas Jimenez & JUEVES & Excedente & \money{849} \\
+8 & 04.26-006-01ef & Gudelia Ortiz Martinez & JUEVES & Excedente & \money{849} \\
+9 & 03.26-00A-01ef & Zeferino Zenteno Sanchez & JUEVES & Pago & \money{815} \\
+10 & 03.26-009-01ef & Eberth Cervantes Romero & JUEVES & Pago & \money{815} \\
+11 & 01-26-0011-ef & Judith Reyes Ramirez & JUEVES & Pago & \money{815} \\
+12 & L-10339-ef & Araceli Rodriguez Valencia & JUEVES & Excedente & \money{720} \\
+13 & 02.26-007-01ef & Nicolas Hernandez Perez & JUEVES & Excedente & \money{703} \\
+14 & L-10336-ef & Maricarmen Castillo Lopez & JUEVES & Excedente & \money{700} \\
+15 & 02.26-006-01ef & Cristopher Eduardo Celestino Serapio & JUEVES & Excedente & \money{648} \\
+16 & L-10317-ef & Francisco Monterrosa Lopez & JUEVES & Excedente & \money{648} \\
+17 & 01-26-0013-ef & Marco Antonio Clemente Cruz & JUEVES & Excedente & \money{616} \\
+18 & 04.26-007-01ef & Lidia Karen Balderas De Jesus & JUEVES & Excedente & \money{609} \\
+19 & V-12224-ef & Maria Aurora Leyva De La Cruz & JUEVES & Pago & \money{585} \\
+20 & 04.26-009-01ef & Camila Gabina De Jesus Castillo & JUEVES & Excedente & \money{576} \\
+21 & N-16866-ef & Daniel Gonzalez Cortez & JUEVES & Excedente & \money{530} \\
+22 & L-10308-ef & Catalina Lopez Ruiz & JUEVES & Excedente & \money{522} \\
+23 & 02.26-004-01ef & Angeles Gabriela Bartolo Serapio & JUEVES & Pago & \money{520} \\
+24 & 03.26-006-01ef & Maria Angelica Valerio Cañedo & JUEVES & Pago & \money{520} \\
+25 & V-12217-49-ef & Felisa Josefina Carrera Cruz & JUEVES & Pago & \money{520} \\
+26 & 02.26-002-01ef & Patricia Muñoz Muñoz & JUEVES & Excedente & \money{454} \\
+27 & P-7447-ef & David Flores Nuñez & JUEVES & Excedente & \money{450} \\
+28 & 02.26-005-01ef & Jesus Robledo Baltazar & JUEVES & Excedente & \money{447} \\
+29 & 04.26-003-01ef & Emilia Ascecion Ruiz Sanchez & JUEVES & Excedente & \money{408} \\
+30 & 04.26-009-01ef & Camila Gabina De Jesus Castillo & JUEVES & Reducido & \money{124} \\
+31 & P-7426-ef & Marco Polo Sanchez Olmos & JUEVES & Excedente & \money{1700} \\
+32 & N-16864-ef & Maria Del Socorro Morales Perez & JUEVES & Excedente & \money{272} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE001 $\rightarrow$ AGE007 --- Maria Virginia Diaz (16 cli., \money{9368})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-3062-49-ef & Salomon Temich Malaga & JUEVES & Excedente & \money{862} \\
+2 & L-10333-ef & Lizeth Ivon Lopez Torres & JUEVES & Excedente & \money{753} \\
+3 & L-10302-ef & Felix Jimenez Perez & JUEVES & Excedente & \money{753} \\
+4 & 01-26-0017-ef & Guadalupe Julissa Cruz Rosas & JUEVES & Excedente & \money{739} \\
+5 & L-10095-ef & Jorge Aristides Valderrama Carpintero & JUEVES & Excedente & \money{720} \\
+6 & L-10321-49-ef & Maria De Los Angeles Muñoz Quirasco & JUEVES & Excedente & \money{690} \\
+7 & V-12222-ef & Maria Hermelinda Cruz Lopez & JUEVES & Excedente & \money{670} \\
+8 & L-10301-ef & Zeferino Garcia Sanchez & JUEVES & Excedente & \money{609} \\
+9 & 04.26-00D-01ef & Ana Carolina Valerio Morales & JUEVES & Excedente & \money{566} \\
+10 & V-12220-ef & Maria Del Rosario Juarez Martinez & JUEVES & Excedente & \money{537} \\
+11 & P-7443-ef & Yair Zeferino Garcia Olivares & JUEVES & Excedente & \money{529} \\
+12 & 04.26-00C-01ef & Diane Michell Perez Serapio & JUEVES & Excedente & \money{522} \\
+13 & L-10338-ef & Mario Sanchez Pacheco & JUEVES & Excedente & \money{504} \\
+14 & N-16350-ef & Sarai Romero Pacheco & JUEVES & Excedente & \money{453} \\
+15 & 04.26-00E-01ef & Maria Del Socorro Patricia Contreras Mendez & JUEVES & Excedente & \money{261} \\
+16 & V-12208-ef & Josefina Cecilia Alcantara Reyes & JUEVES & Reducido & \money{200} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE002 $\rightarrow$ AGE006 --- Beatriz Vazquez (3 cli., \money{1542})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-2538-ef & Fidelia Juarez Bustamante & JUEVES & Excedente & \money{740} \\
+2 & D-2522-ef & Abel Tolentino Torres & JUEVES & Excedente & \money{620} \\
+3 & 02.26-001-02ef & Araceli Toledo Serapio & JUEVES & Excedente & \money{182} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE002 $\rightarrow$ AGE058 --- Gabina Hernandez (3 cli., \money{1439})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & V-12073-ef & Elizabeth Vidal Ventura & JUEVES & Pago & \money{585} \\
+2 & 04.26-003-02ef & Olivia Reyes Tapia & JUEVES & Excedente & \money{454} \\
+3 & 6298-A-ef & Guadalupe Cortes Ortiz & JUEVES & Excedente & \money{400} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE004 $\rightarrow$ AGE108 --- Aurea Nabor (33 cli., \money{17683})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 02.26-00I-04ef & Gloria Matilde Santiago Marcos & JUEVES & Excedente & \money{1047} \\
+2 & L-10223-ef & Gabriela Olivia Evangelista Lopez & JUEVES & Excedente & \money{941} \\
+3 & L-9888-ef & Marisela Gonzalez Vazquez & JUEVES & Pago & \money{815} \\
+4 & 04.26-00C-04ef & Virginia Mendez Marcelino & JUEVES & Excedente & \money{720} \\
+5 & L-10218-ef & Rosa Itzel Ortega Ramirez & JUEVES & Excedente & \money{690} \\
+6 & L-10215-ef & Micaela Natividad Flores & JUEVES & Excedente & \money{690} \\
+7 & L-10202-ef & Monica Natalia De Jesus Soriano & JUEVES & Excedente & \money{690} \\
+8 & V-12122-ef & Mayra De La Rosa Ramirez & JUEVES & Excedente & \money{669} \\
+9 & L-9884-ef & Petra Feliciano Marcos & JUEVES & Excedente & \money{648} \\
+10 & L-10222-ef & Gloria Floriana Benitez Isidro & JUEVES & Excedente & \money{648} \\
+11 & D-3111-ef & Felicitas Castro De La Vega & JUEVES & Excedente & \money{637} \\
+12 & V-12114-ef & Andrea Santiago De Jesus & JUEVES & Excedente & \money{537} \\
+13 & P-7673-ef & Brayan Marcos Nabor Juvencio & JUEVES & Excedente & \money{529} \\
+14 & 02.26-00H-04ef & Veronica Mendez Marcelino & JUEVES & Excedente & \money{529} \\
+15 & V-12131-ef & Maria Goretti Marcos Natividad & JUEVES & Pago & \money{520} \\
+16 & V-12126-ef & Juan Pablo Garcia De Los Santos & JUEVES & Pago & \money{520} \\
+17 & 03.26-00C-04ef & Israel Contreras Santiago & JUEVES & Excedente & \money{460} \\
+18 & 03.26-00F-04ef & Maria Gertrudis Hilario Santiago & JUEVES & Excedente & \money{454} \\
+19 & N-16688-ef & Lucero De La Luz Gonzaga & JUEVES & Excedente & \money{454} \\
+20 & N-16683-ef & Maria Del Carmen Benitez Santiago & JUEVES & Excedente & \money{454} \\
+21 & N-16675-ef & Dulce Maria Juarez Flores & JUEVES & Excedente & \money{454} \\
+22 & 03.26-00H-04ef & Marco Antonio Cortes Espinoza & JUEVES & Excedente & \money{454} \\
+23 & 04.26-008-04ef & Francisco Javier Cruz Marcos & JUEVES & Excedente & \money{454} \\
+24 & V-12116-ef & Reina Pastrana Flores & JUEVES & Excedente & \money{447} \\
+25 & 04.26-009-04ef & Yahir Alonso Rosales Cabanzo & JUEVES & Excedente & \money{447} \\
+26 & L-10216-49-ef & Claudia Casimiro Ventura & JUEVES & Excedente & \money{435} \\
+27 & 03.26-00E-04ef & Candelaria Ibañez Amador & JUEVES & Excedente & \money{304} \\
+28 & P-7678-49-ef & Eva Pastrana Hernandez & JUEVES & Reducido & \money{300} \\
+29 & 6387-A-49-ef & Norberta Modesta Santiago Juvencio & JUEVES & Excedente & \money{276} \\
+30 & P-7677-49-ef & Jesus Muñoz Orea & JUEVES & Reducido & \money{200} \\
+31 & D-3107-ef & Nancy Guadalupe Marcos Hernandez & JUEVES & Reducido & \money{200} \\
+32 & L-9899-ef & Estefania Montserrat Zarate Flores & JUEVES & Excedente & \money{609} \\
+33 & 6380-A-ef & Rosa Nayely Cortes De La Rosa & JUEVES & Reducido & \money{451} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE006 $\rightarrow$ AGE010 --- Misael Romero (10 cli., \money{7042})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-3178-ef & Maria Elena Hernandez Santiago & JUEVES & Excedente & \money{1047} \\
+2 & D-3174-ef & Leticia Hernandez Santiago & JUEVES & Excedente & \money{1047} \\
+3 & D-2824-ef & Maria Jose Lopez Machorro & JUEVES & Excedente & \money{985} \\
+4 & L-9670-ef & Erika Cruz Sorcia & JUEVES & Excedente & \money{690} \\
+5 & 04.26-003-06ef & Laura Maria Luisa Castañeda Irigoyen & JUEVES & Excedente & \money{658} \\
+6 & L-10371-ef & Alfredo Garcia Valeriano & JUEVES & Excedente & \money{522} \\
+7 & N-16807-ef & Shirley Jessabeth Escandon Miguel & JUEVES & Excedente & \money{500} \\
+8 & 04.26-001-06ef & Rogelio Rivera Hernandez & JUEVES & Excedente & \money{460} \\
+9 & V-11885-ef & Misael Romero Solano & JUEVES & Excedente & \money{447} \\
+10 & P-6990-ef & Naira Heli Garcia Rodriguez & JUEVES & Pago & \money{686} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Moneda}
+
+\subsubsection{GERM005 $\rightarrow$ AGM055 --- Josue Emmanuel Carrizalez (1 cli., \money{720})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 04.26-00D-05mo & Juan Carlos Campos Ramirez & JUEVES & Excedente & \money{720} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Plata}
+
+\subsubsection{GERP003 $\rightarrow$ AGP014 --- Gisela Bautista (6 cli., \money{3697})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-1427-pl & Javier Rodriguez Rendon & JUEVES & Excedente & \money{1000} \\
+2 & L-1594-pl & Abelardo Lagunes Diaz & JUEVES & Excedente & \money{720} \\
+3 & L-1555-pl & Vianey Griselda Cruz Lopez & JUEVES & Excedente & \money{648} \\
+4 & L-1568-pl & Jose Antonio Guevara Cruz & JUEVES & Excedente & \money{610} \\
+5 & N-2199-pl & Iris Guadalupe Casimiro Bello & JUEVES & Excedente & \money{454} \\
+6 & P-0894-pl & Jesus Flores Saldivar & JUEVES & Excedente & \money{265} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\newpage
+\section{Detalle por Cliente --- Semana 6 (Mi\'ercoles 4 de Febrero 2026)}
+
+\subsection{Sucursal Capital}
+
+\subsubsection{GERC003 $\rightarrow$ AGC013 --- Máximo Hernández (2 cli., \money{881})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-7084-49-ca & Hilda Fernanda Marcito Mora & JUEVES & Excedente & \money{478} \\
+2 & V-6273-49-ca & Maricarmen De Jesus Lopez & JUEVES & Excedente & \money{403} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERC003 $\rightarrow$ AGC023 --- Dora Maria Gutierrez (2 cli., \money{895})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & N-9417-49-ca & Silvia Ayala Flores & JUEVES & Excedente & \money{454} \\
+2 & P-4509-49-ca & Diana Rojas Cosme & JUEVES & Excedente & \money{441} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Dinero}
+
+\subsubsection{GERD009 $\rightarrow$ AGD066 --- Bertha Visuel (10 cli., \money{5760})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 02.26-00E-09di & Getzabel Lopez Flores & JUEVES & Excedente & \money{857} \\
+2 & 02.26-00A-09di & Isamar Najera Curiel & JUEVES & Excedente & \money{750} \\
+3 & P-6631-di & Silvia Canuto De La Cruz & JUEVES & Excedente & \money{636} \\
+4 & 02.26-00C-09di & Liliana Maribel Zarate Castillo & JUEVES & Excedente & \money{550} \\
+5 & 02.26-002-09di & Sonia Castañeda Islas & JUEVES & Excedente & \money{550} \\
+6 & 04.26-004-09di & Maria Lency Rivas Sanchez & JUEVES & Excedente & \money{537} \\
+7 & 02.26-009-09di & Areli Gonzalez Vazquez & JUEVES & Excedente & \money{529} \\
+8 & P-6648-di & Marlen Espinoza Hernandez & JUEVES & Excedente & \money{529} \\
+9 & N-12847-di & Koyozahuky Hernandez Espejel & JUEVES & Excedente & \money{454} \\
+10 & 19618-di & Joana Galvez Sanchez & JUEVES & Excedente & \money{368} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD067 --- Itzel Yareli Martinez (5 cli., \money{3101})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-12610-di & Kimberly Bertha Carmona Vazquez & JUEVES & Excedente & \money{720} \\
+2 & L-12175-di & Maria Nayeli Cova Tenopala & JUEVES & Excedente & \money{626} \\
+3 & L-12174-di & Aline Michelle Carmona Camacho & JUEVES & Excedente & \money{626} \\
+4 & P-6644-di & Lizbeth Camacho Sanchez & JUEVES & Excedente & \money{600} \\
+5 & N-12836-di & Josefina Romero Martinez & JUEVES & Excedente & \money{529} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD076 --- Vacante (9 cli., \money{4664})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & V-9238-di & Josefina Vargas Alonso & JUEVES & Pago & \money{647} \\
+2 & P-6636-di & Estela Garcia Araoz & JUEVES & Pago & \money{636} \\
+3 & L-12170-di & Adriana Castro Roldan & JUEVES & Pago & \money{576} \\
+4 & 02.26-00K-09di & Francisco Fernando Cortes Marquez & JUEVES & Pago & \money{558} \\
+5 & V-9237-di & Maria Clara Landeros Juarez & JUEVES & Pago & \money{537} \\
+6 & N-12845-di & Elizabeth Rodriguez Jimenez & JUEVES & Pago & \money{499} \\
+7 & V-9250-49-di & Amairani Zeltzin Sanchez Rodriguez & JUEVES & Pago & \money{492} \\
+8 & N-12846-di & Vicente Trilla Hernandez & JUEVES & Pago & \money{454} \\
+9 & 02.26-00M-09di & Yahir Mejia Cuatepotzo & JUEVES & Pago & \money{265} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD085 --- Blanca Estela Rivera (11 cli., \money{6075})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 03.26-00L-09di & Victor Hugo Rivera Espejel & JUEVES & Excedente & \money{647} \\
+2 & V-9168-di & Diego Vargas Lopez & JUEVES & Excedente & \money{647} \\
+3 & L-12612-di & Karina Rivera Rivera & JUEVES & Excedente & \money{626} \\
+4 & 05.26-00A-09di & Rosa Maria Miranda Garcia & JUEVES & Excedente & \money{609} \\
+5 & V-9173-di & Lucia Rocha Hernandez & JUEVES & Excedente & \money{595} \\
+6 & V-9234-di & Maria Elizabeth Gonzalez Meneses & JUEVES & Excedente & \money{537} \\
+7 & V-9233-di & Jose Jesus Portilla Alvarez & JUEVES & Excedente & \money{537} \\
+8 & P-6642-di & Maria Silvia Silverio Gonzalez & JUEVES & Reducido & \money{500} \\
+9 & N-12840-di & Reina Claudia Labastida Hernandez & JUEVES & Excedente & \money{499} \\
+10 & 03.26-00M-09di & Manuela Miranda Garcia & JUEVES & Excedente & \money{478} \\
+11 & V-9171-di & Paulina Alvarez Garcia & JUEVES & Reducido & \money{400} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD009 $\rightarrow$ AGD086 --- Ivonne Hernández (6 cli., \money{3205})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 04.26-009-09di & Maria Cristina Madin Roldan & JUEVES & Excedente & \money{609} \\
+2 & P-6643-di & Francisca Alvarado Palacios & JUEVES & Excedente & \money{600} \\
+3 & V-9230-di & Victoria Velasquez Garcia & JUEVES & Excedente & \money{595} \\
+4 & N-12844-di & Yanet Irene Sierra Hernandez & JUEVES & Excedente & \money{500} \\
+5 & 19619-di & Patricia Cabrera Luna & JUEVES & Excedente & \money{460} \\
+6 & P-6647-di & Jennifer Roldan Hidalgo & JUEVES & Excedente & \money{441} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD011 $\rightarrow$ AGD073 --- Luis Salazar (1 cli., \money{453})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & N-12884-di & Teofila Hernandez Nava & JUEVES & Excedente & \money{453} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERD011 $\rightarrow$ AGD078 --- Alejandra Chamorro (17 cli., \money{9296})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-1650-di & Gabriela Lopez Hernandez & JUEVES & Excedente & \money{849} \\
+2 & D-1648-di & Dulce Caridad Angeles Nava & JUEVES & Reducido & \money{766} \\
+3 & L-12431-di & Elizabeth Ayala Arriaga & JUEVES & Excedente & \money{720} \\
+4 & D-2396-49-di & Guillermina Castillo Cruz & JUEVES & Excedente & \money{637} \\
+5 & L-12427-di & Marcela Romano Nolasco & JUEVES & Reducido & \money{596} \\
+6 & P-6220-49-di & Ma. Del Rosario Noche Cuahutle & JUEVES & Excedente & \money{585} \\
+7 & P-6216-di & Argelia Nava Hernandez & JUEVES & Excedente & \money{585} \\
+8 & L-12243-di & Valeria Vasquez Perez & JUEVES & Excedente & \money{576} \\
+9 & L-12244-di & Ignacia Cocoletzi Ilhuicatzi & JUEVES & Reducido & \money{575} \\
+10 & L-12434-di & Antonia Maravilla Corona & JUEVES & Excedente & \money{540} \\
+11 & L-12429-di & Berenice Sanchez Maldonado & JUEVES & Excedente & \money{522} \\
+12 & N-12886-di & Silverio Moreno Lobato & JUEVES & Excedente & \money{499} \\
+13 & N-12882-di & Ascencion Romano Mixcoatl & JUEVES & Reducido & \money{491} \\
+14 & 04.26-00C-11di & Luz Maria Flores Martinez & JUEVES & Excedente & \money{441} \\
+15 & 19599-di & Francisco Javier Romano Montiel & JUEVES & Excedente & \money{368} \\
+16 & 05.26-004-11di & Mariela Cocoletzi Mozencahua & JUEVES & Excedente & \money{322} \\
+17 & 05.26-005-11di & Gregoria Mendez De La Fuente & JUEVES & Excedente & \money{224} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Efectivo}
+
+\subsubsection{GERE001 $\rightarrow$ AGE003 --- Maria Maricela Lechuga (33 cli., \money{23177})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-3055-ef & Yanet Andrea Lopez Cruz & JUEVES & Excedente & \money{1108} \\
+2 & 05.26-009-01ef & Jacinto Valente Olmos Balderas & JUEVES & Pago & \money{990} \\
+3 & D-2698-ef & Angel Luis Hernandez Rodriguez & JUEVES & Excedente & \money{985} \\
+4 & D-3066-ef & Francisco Acencion Baltazar Gracia & JUEVES & Excedente & \money{924} \\
+5 & 04.26-00A-01ef & Celia Camacho Barragan & JUEVES & Excedente & \money{920} \\
+6 & 01-26-0014-ef & Brenda Areli Baltazar Mendez & JUEVES & Excedente & \money{862} \\
+7 & D-2691-ef & Juan Carlos Rodriguez Ortega & JUEVES & Excedente & \money{862} \\
+8 & 04.26-006-01ef & Gudelia Ortiz Martinez & JUEVES & Excedente & \money{849} \\
+9 & 02.26-003-01ef & Laura Isabel Arenas Jimenez & JUEVES & Excedente & \money{849} \\
+10 & L-10332-ef & Sarayzel Sanchez Paredes & JUEVES & Pago & \money{815} \\
+11 & 03.26-00A-01ef & Zeferino Zenteno Sanchez & JUEVES & Pago & \money{815} \\
+12 & 03.26-009-01ef & Eberth Cervantes Romero & JUEVES & Pago & \money{815} \\
+13 & 01-26-0011-ef & Judith Reyes Ramirez & JUEVES & Pago & \money{815} \\
+14 & 02.26-008-01ef & Nieves Aurora Rosas Castillo & JUEVES & Excedente & \money{753} \\
+15 & L-10315-ef & Jose Nazareth Sanchez Olmos & JUEVES & Excedente & \money{720} \\
+16 & 02.26-007-01ef & Nicolas Hernandez Perez & JUEVES & Excedente & \money{703} \\
+17 & L-10336-ef & Maricarmen Castillo Lopez & JUEVES & Excedente & \money{700} \\
+18 & 02.26-006-01ef & Cristopher Eduardo Celestino Serapio & JUEVES & Excedente & \money{648} \\
+19 & L-10303-ef & Silvano Torres Vazquez & JUEVES & Excedente & \money{648} \\
+20 & P-7429-ef & Maximino Cirilo Balderas Carpintero & JUEVES & Excedente & \money{639} \\
+21 & 01-26-0013-ef & Marco Antonio Clemente Cruz & JUEVES & Excedente & \money{616} \\
+22 & 04.26-007-01ef & Lidia Karen Balderas De Jesus & JUEVES & Excedente & \money{609} \\
+23 & V-12224-ef & Maria Aurora Leyva De La Cruz & JUEVES & Pago & \money{585} \\
+24 & 04.26-009-01ef & Camila Gabina De Jesus Castillo & JUEVES & Excedente & \money{576} \\
+25 & N-16866-ef & Daniel Gonzalez Cortez & JUEVES & Excedente & \money{530} \\
+26 & L-10308-ef & Catalina Lopez Ruiz & JUEVES & Excedente & \money{522} \\
+27 & 03.26-006-01ef & Maria Angelica Valerio Cañedo & JUEVES & Pago & \money{520} \\
+28 & 02.26-004-01ef & Angeles Gabriela Bartolo Serapio & JUEVES & Pago & \money{520} \\
+29 & V-12217-49-ef & Felisa Josefina Carrera Cruz & JUEVES & Pago & \money{520} \\
+30 & 02.26-002-01ef & Patricia Muñoz Muñoz & JUEVES & Excedente & \money{454} \\
+31 & P-7447-ef & David Flores Nuñez & JUEVES & Excedente & \money{450} \\
+32 & 02.26-005-01ef & Jesus Robledo Baltazar & JUEVES & Excedente & \money{447} \\
+33 & 04.26-003-01ef & Emilia Ascecion Ruiz Sanchez & JUEVES & Excedente & \money{408} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE001 $\rightarrow$ AGE007 --- Maria Virginia Diaz (19 cli., \money{11467})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-2686-ef & Sergio Campos Santoyo & JUEVES & Excedente & \money{1100} \\
+2 & D-3062-49-ef & Salomon Temich Malaga & JUEVES & Excedente & \money{862} \\
+3 & L-10333-ef & Lizeth Ivon Lopez Torres & JUEVES & Excedente & \money{753} \\
+4 & L-10302-ef & Felix Jimenez Perez & JUEVES & Excedente & \money{753} \\
+5 & 01-26-0017-ef & Guadalupe Julissa Cruz Rosas & JUEVES & Excedente & \money{739} \\
+6 & L-10095-ef & Jorge Aristides Valderrama Carpintero & JUEVES & Excedente & \money{720} \\
+7 & L-10321-49-ef & Maria De Los Angeles Muñoz Quirasco & JUEVES & Excedente & \money{700} \\
+8 & V-12222-ef & Maria Hermelinda Cruz Lopez & JUEVES & Excedente & \money{670} \\
+9 & L-10301-ef & Zeferino Garcia Sanchez & JUEVES & Excedente & \money{609} \\
+10 & 04.26-00D-01ef & Ana Carolina Valerio Morales & JUEVES & Excedente & \money{568} \\
+11 & P-7443-ef & Yair Zeferino Garcia Olivares & JUEVES & Excedente & \money{529} \\
+12 & 04.26-00C-01ef & Diane Michell Perez Serapio & JUEVES & Excedente & \money{522} \\
+13 & L-10338-ef & Mario Sanchez Pacheco & JUEVES & Excedente & \money{504} \\
+14 & V-12220-ef & Maria Del Rosario Juarez Martinez & JUEVES & Reducido & \money{500} \\
+15 & N-16876-ef & Gregorio Lopez Martinez & JUEVES & Excedente & \money{454} \\
+16 & N-16350-ef & Sarai Romero Pacheco & JUEVES & Pago & \money{450} \\
+17 & 02.26-00A-01ef & Saul Paulino Remigio & JUEVES & Excedente & \money{450} \\
+18 & L-10316-ef & Maria Luisa Valerio Ginez & JUEVES & Reducido & \money{400} \\
+19 & 04.26-00E-01ef & Maria Del Socorro Patricia Contreras Mendez & JUEVES & Reducido & \money{184} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE002 $\rightarrow$ AGE006 --- Beatriz Vazquez (3 cli., \money{1542})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-2538-ef & Fidelia Juarez Bustamante & JUEVES & Excedente & \money{740} \\
+2 & D-2522-ef & Abel Tolentino Torres & JUEVES & Excedente & \money{620} \\
+3 & 02.26-001-02ef & Araceli Toledo Serapio & JUEVES & Excedente & \money{182} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE002 $\rightarrow$ AGE058 --- Gabina Hernandez (2 cli., \money{1039})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & V-12073-ef & Elizabeth Vidal Ventura & JUEVES & Pago & \money{585} \\
+2 & 04.26-003-02ef & Olivia Reyes Tapia & JUEVES & Excedente & \money{454} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE004 $\rightarrow$ AGE108 --- Aurea Nabor (32 cli., \money{16765})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 02.26-00I-04ef & Gloria Matilde Santiago Marcos & JUEVES & Excedente & \money{1047} \\
+2 & L-10223-ef & Gabriela Olivia Evangelista Lopez & JUEVES & Excedente & \money{941} \\
+3 & L-9888-ef & Marisela Gonzalez Vazquez & JUEVES & Pago & \money{815} \\
+4 & 04.26-00C-04ef & Virginia Mendez Marcelino & JUEVES & Excedente & \money{720} \\
+5 & L-10215-ef & Micaela Natividad Flores & JUEVES & Excedente & \money{690} \\
+6 & L-10202-ef & Monica Natalia De Jesus Soriano & JUEVES & Excedente & \money{690} \\
+7 & L-10218-ef & Rosa Itzel Ortega Ramirez & JUEVES & Excedente & \money{690} \\
+8 & V-12122-ef & Mayra De La Rosa Ramirez & JUEVES & Excedente & \money{669} \\
+9 & L-9884-ef & Petra Feliciano Marcos & JUEVES & Excedente & \money{648} \\
+10 & L-10222-ef & Gloria Floriana Benitez Isidro & JUEVES & Excedente & \money{648} \\
+11 & P-7673-ef & Brayan Marcos Nabor Juvencio & JUEVES & Excedente & \money{529} \\
+12 & 02.26-00H-04ef & Veronica Mendez Marcelino & JUEVES & Excedente & \money{529} \\
+13 & V-12114-ef & Andrea Santiago De Jesus & JUEVES & Reducido & \money{526} \\
+14 & V-12126-ef & Juan Pablo Garcia De Los Santos & JUEVES & Pago & \money{520} \\
+15 & 05.26-00D-04ef & Florencia Hernandez Cortes & JUEVES & Pago & \money{520} \\
+16 & V-12131-ef & Maria Goretti Marcos Natividad & JUEVES & Pago & \money{520} \\
+17 & 05.26-00I-04ef & Rosa Nayely Cortes De La Rosa & JUEVES & Excedente & \money{460} \\
+18 & 05.26-00C-04ef & Leticia Pastrana Hernandez & JUEVES & Excedente & \money{460} \\
+19 & 03.26-00F-04ef & Maria Gertrudis Hilario Santiago & JUEVES & Excedente & \money{454} \\
+20 & N-16688-ef & Lucero De La Luz Gonzaga & JUEVES & Excedente & \money{454} \\
+21 & N-16683-ef & Maria Del Carmen Benitez Santiago & JUEVES & Excedente & \money{454} \\
+22 & 03.26-00H-04ef & Marco Antonio Cortes Espinoza & JUEVES & Excedente & \money{454} \\
+23 & 04.26-008-04ef & Francisco Javier Cruz Marcos & JUEVES & Excedente & \money{454} \\
+24 & V-12116-ef & Reina Pastrana Flores & JUEVES & Excedente & \money{447} \\
+25 & N-16675-ef & Dulce Maria Juarez Flores & JUEVES & Reducido & \money{441} \\
+26 & L-10216-49-ef & Claudia Casimiro Ventura & JUEVES & Excedente & \money{435} \\
+27 & D-3107-ef & Nancy Guadalupe Marcos Hernandez & JUEVES & Excedente & \money{429} \\
+28 & 03.26-00E-04ef & Candelaria Ibañez Amador & JUEVES & Excedente & \money{304} \\
+29 & 6387-A-49-ef & Norberta Modesta Santiago Juvencio & JUEVES & Excedente & \money{276} \\
+30 & 03.26-00C-04ef & Israel Contreras Santiago & JUEVES & Reducido & \money{200} \\
+31 & P-7677-49-ef & Jesus Muñoz Orea & JUEVES & Reducido & \money{200} \\
+32 & P-7678-49-ef & Eva Pastrana Hernandez & JUEVES & Reducido & \money{141} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsubsection{GERE006 $\rightarrow$ AGE010 --- Misael Romero (8 cli., \money{5688})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & D-3174-ef & Leticia Hernandez Santiago & JUEVES & Excedente & \money{1047} \\
+2 & D-3178-ef & Maria Elena Hernandez Santiago & JUEVES & Excedente & \money{1047} \\
+3 & D-2824-ef & Maria Jose Lopez Machorro & JUEVES & Excedente & \money{985} \\
+4 & L-9670-ef & Erika Cruz Sorcia & JUEVES & Pago & \money{680} \\
+5 & L-10371-ef & Alfredo Garcia Valeriano & JUEVES & Excedente & \money{522} \\
+6 & N-16807-ef & Shirley Jessabeth Escandon Miguel & JUEVES & Excedente & \money{500} \\
+7 & 04.26-001-06ef & Rogelio Rivera Hernandez & JUEVES & Excedente & \money{460} \\
+8 & V-11885-ef & Misael Romero Solano & JUEVES & Excedente & \money{447} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Moneda}
+
+\subsubsection{GERM005 $\rightarrow$ AGM055 --- Josue Emmanuel Carrizalez (1 cli., \money{720})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & 04.26-00D-05mo & Juan Carlos Campos Ramirez & JUEVES & Excedente & \money{720} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\subsection{Sucursal Plata}
+
+\subsubsection{GERP003 $\rightarrow$ AGP014 --- Gisela Bautista (7 cli., \money{3912})}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{rlp{5.5cm}llr}
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Pr\'estamo} & \textbf{Cliente} & \textbf{D\'ia} & \textbf{Tipo} & \textbf{Monto} \\
+\midrule
+\endhead
+1 & L-1427-pl & Javier Rodriguez Rendon & JUEVES & Excedente & \money{950} \\
+2 & L-1594-pl & Abelardo Lagunes Diaz & JUEVES & Excedente & \money{720} \\
+3 & L-1555-pl & Vianey Griselda Cruz Lopez & JUEVES & Excedente & \money{648} \\
+4 & L-1568-pl & Jose Antonio Guevara Cruz & JUEVES & Excedente & \money{610} \\
+5 & N-2199-pl & Iris Guadalupe Casimiro Bello & JUEVES & Excedente & \money{454} \\
+6 & P-0894-pl & Jesus Flores Saldivar & JUEVES & Excedente & \money{265} \\
+7 & 05.26-00A-03pl & Blanca Estela Trujillo Rodriguez & JUEVES & Excedente & \money{265} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\newpage
+
+\section{Agencias Consistentes (Ambas Semanas)}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\rowcolors{2}{lightgray}{white}
+\footnotesize
+\begin{longtable}{lllllrrrr}
+\toprule
+\textbf{Suc.} & \textbf{Ger.} & \textbf{Ag.} & \textbf{Agente}
+  & \multicolumn{2}{c}{\textbf{Clientes}} & \multicolumn{2}{c}{\textbf{Monto}} \\
+\cmidrule(lr){5-6} \cmidrule(lr){7-8}
+& & & & \textbf{S5} & \textbf{S6} & \textbf{S5} & \textbf{S6} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Suc.} & \textbf{Ger.} & \textbf{Ag.} & \textbf{Agente}
+  & \textbf{S5} & \textbf{S6} & \textbf{S5} & \textbf{S6} \\
+\midrule
+\endhead
+Capital & GERC003 & AGC013 & Máximo Hernández & 2 & 2 & \money{881} & \money{881} \\
+Capital & GERC003 & AGC023 & Dora Maria Gutierrez & 2 & 2 & \money{904} & \money{895} \\
+Dinero & GERD009 & AGD066 & Bertha Visuel & 10 & 10 & \money{5776} & \money{5760} \\
+Dinero & GERD009 & AGD067 & Itzel Yareli Martinez & 7 & 5 & \money{4307} & \money{3101} \\
+Dinero & GERD011 & AGD073 & Luis Salazar & 1 & 1 & \money{453} & \money{453} \\
+Dinero & GERD009 & AGD076 & Vacante & 11 & 9 & \money{5745} & \money{4664} \\
+Dinero & GERD011 & AGD078 & Alejandra Chamorro & 15 & 17 & \money{8777} & \money{9296} \\
+Dinero & GERD009 & AGD085 & Blanca Estela Rivera & 10 & 11 & \money{5826} & \money{6075} \\
+Dinero & GERD009 & AGD086 & Ivonne Hernández & 7 & 6 & \money{3569} & \money{3205} \\
+Efectivo & GERE001 & AGE003 & Maria Maricela Lechuga & 32 & 33 & \money{22034} & \money{23177} \\
+Efectivo & GERE002 & AGE006 & Beatriz Vazquez & 3 & 3 & \money{1542} & \money{1542} \\
+Efectivo & GERE001 & AGE007 & Maria Virginia Diaz & 16 & 19 & \money{9368} & \money{11467} \\
+Efectivo & GERE006 & AGE010 & Misael Romero & 10 & 8 & \money{7042} & \money{5688} \\
+Efectivo & GERE002 & AGE058 & Gabina Hernandez & 3 & 2 & \money{1439} & \money{1039} \\
+Efectivo & GERE004 & AGE108 & Aurea Nabor & 33 & 32 & \money{17683} & \money{16765} \\
+Moneda & GERM005 & AGM055 & Josue Emmanuel Carrizalez & 1 & 1 & \money{720} & \money{720} \\
+Plata & GERP003 & AGP014 & Gisela Bautista & 6 & 7 & \money{3697} & \money{3912} \\
+
+\bottomrule
+\end{longtable}
+\end{center}
+\end{document}
