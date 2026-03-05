@@ -28,9 +28,11 @@ Con esos datos, consultar las solicitudes pendientes y revisarlas una por una.
 ### Flujo de status
 
 ```
-pendiente  →  aprobada     (requiere resultado_revision + diagnostico + tabla_cargos_id_sugerido)
-pendiente  →  rechazada    (requiere lo anterior + motivo_rechazo)
-pendiente  →  corregir     (requiere lo anterior + motivo_rechazo + doc_invalido_detalle)
+pendiente  →  aprobada                 (pasa exactamente como fue solicitada)
+pendiente  →  aprobada_con_ajuste      (no pasa exacta, pero sí con otro monto/nivel/plazo sugerido)
+pendiente  →  aprobada_condicionada    (pasa filtro, pero requiere validaciones adicionales como seguridad/direccion)
+pendiente  →  rechazada                (no procede, con o sin alternativa)
+pendiente  →  corregir                 (documentos/datos inválidos o incompletos)
 corregir   →  pendiente    (automático al subir doc corregido)
 ```
 
@@ -205,7 +207,11 @@ AND pd.saldo > 0
 - Verificar periodo facturado o fecha de emisión en `documentos.comprobante_cliente.datos_extraidos`
 - Calcular desde la fecha actual. Si tiene más de 3 meses → `false`, `status: "corregir"`
 - Si el periodo no es legible (null) → `false`, `status: "corregir"`, indicar: "No se pudo leer periodo del comprobante. Se requiere nueva foto."
-- **Para comprobantes CFE**: el periodo de vigencia se determina con los campos **"LÍMITE DE PAGO"** y **"CORTE A PARTIR"** que aparecen en el recibo. Ejemplo: `LÍMITE DE PAGO: 11 ENE 26` / `CORTE A PARTIR: 12 ENE 26`. La fecha de corte indica el fin del periodo facturado; calcular antigüedad desde esa fecha.
+- **Para comprobantes CFE**: la vigencia se determina prioritariamente con los campos **"CORTE A PARTIR"** y **"LÍMITE DE PAGO"** que aparecen en el recibo.
+- Usar como fecha principal `CORTE A PARTIR`, porque marca el fin del periodo facturado. Ejemplo: `LÍMITE DE PAGO: 25 ENE 26` / `CORTE A PARTIR: 26 ENE 26` → calcular antigüedad desde `26 ENE 26`.
+- Si `CORTE A PARTIR` no viene estructurado en `datos_extraidos` pero sí está visible en la imagen, el revisor debe tomar la fecha manualmente desde la imagen y usarla para el check.
+- Si no existe `CORTE A PARTIR`, usar `LÍMITE DE PAGO` como respaldo.
+- `periodo_facturado` en CFE se usa solo como respaldo cuando no exista una lectura confiable de `CORTE A PARTIR` o `LÍMITE DE PAGO`.
 
 **c05 — Comprobante del aval no mayor a 3 meses**
 - Misma lógica que c04 con `documentos.comprobante_aval.datos_extraidos`
@@ -393,10 +399,18 @@ LIMIT 1
 
 | Resultado | status | Campos obligatorios |
 |-----------|--------|---------------------|
-| Todo OK | `aprobada` | `resultado_revision`, `diagnostico`, `tabla_cargos_id_sugerido` (= mismo ID solicitado) |
-| No procede pero hay alternativa | `rechazada` | Lo anterior + `motivo_rechazo`, `tabla_cargos_id_sugerido` (= ID alternativo) |
-| No procede sin alternativa | `rechazada` | Lo anterior + `motivo_rechazo` (sin sugerencia viable) |
+| Todo OK y no requiere seguridad/dirección | `aprobada` | `resultado_revision`, `diagnostico`, `tabla_cargos_id_sugerido` (= mismo ID solicitado) |
+| Todo OK pero requiere seguridad y/o dirección | `aprobada_condicionada` | `resultado_revision`, `diagnostico`, `tabla_cargos_id_sugerido` (= mismo ID solicitado) |
+| No procede exacta, pero sí con ajuste viable | `aprobada_con_ajuste` | `resultado_revision`, `diagnostico`, `motivo_rechazo`, `tabla_cargos_id_sugerido` (= ID alternativo) |
+| No procede sin alternativa viable | `rechazada` | `resultado_revision`, `diagnostico`, `motivo_rechazo` |
 | Doc inválido/vencido | `corregir` | Lo anterior + `motivo_rechazo`, `doc_invalido_detalle` |
+
+**Regla de decisión recomendada:**
+- Si falla un documento o dato crítico → `corregir`
+- Si no pasa reglas de riesgo/comerciales y no existe alternativa → `rechazada`
+- Si no pasa exactamente el plan solicitado, pero existe un plan alternativo válido en `tabla_cargos` → `aprobada_con_ajuste`
+- Si pasa el filtro y `c32_requiere_seguridad = true` o `c33_requiere_direccion = true` → `aprobada_condicionada`
+- Si pasa el filtro y no requiere seguridad ni dirección → `aprobada`
 
 ---
 
@@ -504,7 +518,7 @@ LIMIT 1
 | `prestamo_activo` | Todo el objeto es `null` si no tiene préstamo activo |
 | `domicilio` | Nunca es null |
 | `tabla_cargos` | Nunca es null |
-| `tabla_cargos_id_sugerido` | Nunca es null: mismo ID si aprobada, alternativo si rechazada, solicitado si corregir |
+| `tabla_cargos_id_sugerido` | Nunca es null: mismo ID si `aprobada`/`aprobada_condicionada`, alternativo si `aprobada_con_ajuste`, solicitado si `corregir` |
 
 ---
 
@@ -765,7 +779,7 @@ Semanas mínimas pagadas del cliente avalado para autorizar crédito al aval:
 | `data` | longtext JSON | Metadata: solicitud_id_r2, snapshot tabla_cargos, tokens OCR |
 | `docs_validos` | tinyint(1) | 1 si los 4 docs fueron leídos por OCR |
 | `doc_invalido_detalle` | varchar(255) | Qué documento falló |
-| `status` | ENUM | pendiente, aprobada, rechazada, corregir |
+| `status` | ENUM | pendiente, aprobada, aprobada_con_ajuste, aprobada_condicionada, rechazada, corregir |
 | `reviewed_by` | varchar(32) | Quién revisó |
 | `reviewed_at` | timestamp | Cuándo se revisó |
 | `motivo_rechazo` | text | Razón del rechazo o corrección |
