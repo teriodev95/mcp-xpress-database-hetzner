@@ -25,6 +25,7 @@ Knowledge base local del proyecto. Vive en el repo, se comparte vía git push.
 - [revertir-prestamo-completado.md](procedures/revertir-prestamo-completado.md) — Regresar de `prestamos_completados` a `prestamos_v2`
 
 ### Bitácora de incidentes (`incidents/`)
+- [2026-04-24-rollback-prestamos-dynamic-no-ejecuta.md](incidents/2026-04-24-rollback-prestamos-dynamic-no-ejecuta.md) — Eliminar liquidación deja "fantasma" en `prestamos_dynamic` (sin rollback)
 - [2026-04-23-pagos-dynamic-merge-bug.md](incidents/2026-04-23-pagos-dynamic-merge-bug.md) — Trigger fusiona pagos de semanas distintas
 - [2026-04-23-buscar-personas-cartesian.md](incidents/2026-04-23-buscar-personas-cartesian.md) — Cartesian product en search + duplicados
 - [2026-04-23-asignaciones-cero-app.md](incidents/2026-04-23-asignaciones-cero-app.md) — Falsa alarma: filtro by-design
