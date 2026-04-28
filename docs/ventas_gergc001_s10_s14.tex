@@ -1,0 +1,293 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage[table]{xcolor}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+
+\definecolor{hdr}{HTML}{1A3A5C}
+\definecolor{lg}{HTML}{F5F5F5}
+\definecolor{sub}{HTML}{E8EEF4}
+\definecolor{weekhdr}{HTML}{2C5F8A}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\footnotesize\color{gray} P\'agina \thepage\ de \pageref{LastPage}}
+
+\setlength{\parindent}{0pt}
+\newcommand{\semhdr}[3]{%
+  \vspace{14pt}
+  {\color{weekhdr}\Large\textbf{Semana #1 / 2026}} \hfill {\normalsize #2 ventas --- \$#3}\\[2pt]
+  \rule{\textwidth}{0.4pt}\vspace{4pt}
+}
+\newcommand{\aghdr}[2]{%
+  \vspace{8pt}
+  {\color{hdr}\normalsize\textbf{#1}} \hfill {\scriptsize #2}\\[4pt]
+}
+\newenvironment{vtable}{%
+  \rowcolors{2}{lg}{white}
+  \begin{tabular}{>{\scriptsize}r >{\scriptsize}l >{\scriptsize}c >{\scriptsize}c >{\scriptsize}r >{\scriptsize}r}
+  \toprule
+  \rowcolor{hdr}
+  \textcolor{white}{\textbf{ID}} & \textcolor{white}{\textbf{Cliente}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Plazo}} & \textcolor{white}{\textbf{Monto}} & \textcolor{white}{\textbf{1er Pago}} \\
+  \midrule
+}{%
+  \bottomrule
+  \end{tabular}
+}
+\newcommand{\subtot}[3]{%
+  \midrule
+  \rowcolor{sub}
+  \multicolumn{3}{l}{\textbf{Subtotal: #1}} & & \textbf{\$#2} & \textbf{\$#3} \\
+}
+
+\begin{document}
+
+% ─── PORTADA ─────────────────────────────────────────
+{\color{hdr}\LARGE\textbf{Reporte de Ventas}}\\[4pt]
+{\large Gerencia GERGC001 --- Semanas 10 a 14 / 2026}\\[2pt]
+{\color{gray}\small Generado: 02 de abril de 2026}
+
+\vspace{8pt}
+
+{\small
+\begin{tabular}{l r r r}
+\toprule
+\rowcolor{hdr}
+\textcolor{white}{\textbf{Semana}} & \textcolor{white}{\textbf{Ventas}} & \textcolor{white}{\textbf{Monto}} & \textcolor{white}{\textbf{1er Pagos}} \\
+\midrule
+\rowcolor{lg} Semana 10 & 13 & \$57,000 & \$5,237.29 \\
+Semana 11 & 23 & \$101,000 & \$9,280.97 \\
+\rowcolor{lg} Semana 12 & 12 & \$60,000 & \$5,512.56 \\
+Semana 13 & 10 & \$47,000 & \$4,319.81 \\
+\rowcolor{lg} Semana 14 & 21 & \$102,000 & \$9,371.35 \\
+\midrule
+\textbf{Total} & \textbf{79} & \textbf{\$367,000} & \textbf{\$33,721.98} \\
+\bottomrule
+\end{tabular}
+}
+
+\vspace{6pt}\rule{\textwidth}{0.5pt}
+
+% ═══════════════════════════════════════════════════════
+% SEMANA 10
+% ═══════════════════════════════════════════════════════
+\semhdr{10}{13}{57,000}
+
+\aghdr{AGGC001}{MARIA DEL ROCIO GUZMAN}
+\begin{vtable}
+39162 & NATALI SARAI SOLAR LEON & Nuevo & 16 & \$5,000 & \$459.38 \\
+39163 & EMA CANO ROMERO & Nuevo & 16 & \$5,000 & \$459.38 \\
+39164 & ROSIO RAMIREZ RAMOS & Nuevo & 16 & \$3,000 & \$275.63 \\
+39165 & MA DOLORES HERN\'ANDEZ FLORES & Nuevo & 16 & \$3,000 & \$275.63 \\
+39296 & JUDITH MANZANO CARRASCO & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{5 ventas}{21,000}{1,929.40}
+\end{vtable}
+
+\aghdr{AGGC002}{EDITH BAILON}
+\begin{vtable}
+39170 & MONICA TORRES HERNANDEZ & Nuevo & 16 & \$2,000 & \$183.75 \\
+39293 & ANGEL EDUARDO HERNANDEZ GUTIERREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+39294 & SENOBIA IRAIS RAMIREZ VALDEZ & Nuevo & 16 & \$4,000 & \$367.50 \\
+39295 & ABIGAIL MADEL FABIAN & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{16,000}{1,470.01}
+\end{vtable}
+
+\aghdr{AGGC003}{ANGELICA CALITL}
+\begin{vtable}
+39169 & ALEJANDRO ROMERO COYOTL & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{1 venta}{5,000}{459.38}
+\end{vtable}
+
+\aghdr{AGGC004}{KARINA ARACELI AMARO}
+\begin{vtable}
+39166 & MARGARITA TRUJILLO COYOTL & Nuevo & 16 & \$5,000 & \$459.38 \\
+39167 & SILVIA DANIELA CALYECAC LOPEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+39168 & MARIBEL SAIS MENA & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{3 ventas}{15,000}{1,378.14}
+\end{vtable}
+
+% ═══════════════════════════════════════════════════════
+% SEMANA 11
+% ═══════════════════════════════════════════════════════
+\semhdr{11}{23}{101,000}
+
+\aghdr{AGGC001}{MARIA DEL ROCIO GUZMAN}
+\begin{vtable}
+39807 & LILIANA MORENO GUZMAN & Nuevo & 16 & \$5,000 & \$459.38 \\
+39808 & MARIA ISABEL SALAS COYOTL & Nuevo & 16 & \$5,000 & \$459.38 \\
+39816 & CRUZ MAXIMINO AMARO CA\~NO & Nuevo & 16 & \$5,000 & \$459.38 \\
+39817 & MILAGROS RODRIGUEZ MONTIEL & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{20,000}{1,837.52}
+\end{vtable}
+
+\aghdr{AGGC002}{EDITH BAILON}
+\begin{vtable}
+39818 & ANETTE GUADALUPE FABIAN ALVAREZ & Nuevo & 16 & \$4,000 & \$367.50 \\
+39985 & ROCIO GUADALUPE JIMENEZ SANTIAGO & Nuevo & 16 & \$5,000 & \$459.38 \\
+39987 & MARIA LOURDES PEREZ GUZMAN & Nuevo & 16 & \$3,000 & \$275.63 \\
+39991 & MARIA LORENA MARTINEZ ROQUE & Nuevo & 16 & \$5,000 & \$459.38 \\
+39992 & ADELA ALVAREZ ORTEGA & Nuevo & 16 & \$5,000 & \$459.38 \\
+39993 & JUANA LAZARO ALVAREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{6 ventas}{27,000}{2,480.65}
+\end{vtable}
+
+\aghdr{AGGC003}{ANGELICA CALITL}
+\begin{vtable}
+39952 & HILARIA CRUZ SALINAS & Nuevo & 16 & \$3,000 & \$275.63 \\
+39953 & LUCIA CORONA HERNANDEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+39955 & DIANA BELLO CORNELIO & Nuevo & 16 & \$5,000 & \$459.38 \\
+39956 & VICENTA ANTONIA GALUPILA GARACHI & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{18,000}{1,653.77}
+\end{vtable}
+
+\aghdr{AGGC004}{KARINA ARACELI AMARO}
+\begin{vtable}
+39809 & GUADALUPE PABLO MENDEZ & Nuevo & 16 & \$2,000 & \$183.75 \\
+39810 & ARACELI ROMERO GARACHE & Nuevo & 16 & \$5,000 & \$459.38 \\
+39811 & CATALINA MODESTA GALAN SANCHEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+39812 & ESMERALDA JUAREZ SAIS & Nuevo & 16 & \$5,000 & \$459.38 \\
+39813 & MARIA FERNANDA JIMENEZ FLORES & Nuevo & 16 & \$2,000 & \$183.75 \\
+39814 & ALICIA GALINDO MENDEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+39815 & AYDE MENDEZ AMARO & Nuevo & 16 & \$2,000 & \$183.75 \\
+\subtot{7 ventas}{26,000}{2,388.77}
+\end{vtable}
+
+\aghdr{AGGC007}{ANAMARIA SANTAMARIA}
+\begin{vtable}
+39950 & MARIA EUFEMIA R. CONDE MONARCA & Nuevo & 16 & \$5,000 & \$459.38 \\
+39951 & BEATRIZ ANGELES ROJAS NAVA & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{2 ventas}{10,000}{918.76}
+\end{vtable}
+
+% ═══════════════════════════════════════════════════════
+% SEMANA 12
+% ═══════════════════════════════════════════════════════
+\semhdr{12}{12}{60,000}
+
+\aghdr{AGGC001}{MARIA DEL ROCIO GUZMAN}
+\begin{vtable}
+40411 & BERTHA GAYOSSO TECHALOTZI & Nuevo & 16 & \$5,000 & \$459.38 \\
+40412 & MARGARITA CALDERON GALAN & Nuevo & 16 & \$5,000 & \$459.38 \\
+40413 & ARACELI ANTONIO CANALES & Nuevo & 16 & \$5,000 & \$459.38 \\
+40414 & MARIA TERESA TEPECH CARRILLO & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{20,000}{1,837.52}
+\end{vtable}
+
+\aghdr{AGGC002}{EDITH BAILON}
+\begin{vtable}
+40480 & MARIA DE LOS ANGELES PEREZ VAZQUEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+40481 & DULCE FABIOLA GUTIERREZ MORALES & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{2 ventas}{10,000}{918.76}
+\end{vtable}
+
+\aghdr{AGGC003}{ANGELICA CALITL}
+\begin{vtable}
+40435 & ITZAMAR FLORES CANO & Nuevo & 16 & \$5,000 & \$459.38 \\
+40436 & ANGELICA GASPARIANO GONZALEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+40482 & MARIA DEL PILAR DIAZ SAIS & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{3 ventas}{15,000}{1,378.14}
+\end{vtable}
+
+\aghdr{AGGC004}{KARINA ARACELI AMARO}
+\begin{vtable}
+40415 & TERESA MARCELIANO TRINIDAD & Nuevo & 16 & \$5,000 & \$459.38 \\
+40416 & RODOLFO E. GASPARIANO GONZALEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+40572 & SILVIA MIGUELA MORENO & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{3 ventas}{15,000}{1,378.14}
+\end{vtable}
+
+% ═══════════════════════════════════════════════════════
+% SEMANA 13
+% ═══════════════════════════════════════════════════════
+\semhdr{13}{10}{47,000}
+
+\aghdr{AGGC001}{MARIA DEL ROCIO GUZMAN}
+\begin{vtable}
+40991 & JESUS HERNANDEZ MENA & Nuevo & 16 & \$5,000 & \$459.38 \\
+40992 & MARIANA ELSA OSORIO CARRETERA & Nuevo & 16 & \$5,000 & \$459.38 \\
+40993 & REYNA VIVIANA XELANO ESPINOZA & Nuevo & 16 & \$5,000 & \$459.38 \\
+41185 & REYNA MERCEDES TEXIS MORALES & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{20,000}{1,837.52}
+\end{vtable}
+
+\aghdr{AGGC003}{ANGELICA CALITL}
+\begin{vtable}
+41014 & JESSICA JESUS AMARO TLALPA & Nuevo & 16 & \$5,000 & \$459.38 \\
+41015 & IRENE PILAR TLALPA PEREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+41186 & MARIBEL CORONA GALAN & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{3 ventas}{15,000}{1,378.14}
+\end{vtable}
+
+\aghdr{AGGC004}{KARINA ARACELI AMARO}
+\begin{vtable}
+40990 & ALONDRA ZAMBRANO ANIMAS & Nuevo & 16 & \$5,000 & \$459.38 \\
+41005 & YESSICA JANETH CASTILLO XIMELLO & Nuevo & 16 & \$2,000 & \$183.75 \\
+\subtot{2 ventas}{7,000}{643.13}
+\end{vtable}
+
+\aghdr{AGGC007}{ANAMARIA SANTAMARIA}
+\begin{vtable}
+40989 & ISABEL LETICIA FLORES PEREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{1 venta}{5,000}{459.38}
+\end{vtable}
+
+% ═══════════════════════════════════════════════════════
+% SEMANA 14
+% ═══════════════════════════════════════════════════════
+\semhdr{14}{21}{102,000}
+
+\aghdr{AGGC001}{MARIA DEL ROCIO GUZMAN}
+\begin{vtable}
+41729 & NORMA XANCAL LARINO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41730 & OSCAR CANTOR COYOTL & Nuevo & 16 & \$5,000 & \$459.38 \\
+41731 & CYNTHIA TEPAL AMARO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41732 & ANELIZ REYES SERRANO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41735 & LIZ MINELLI ACAMATITLA GALINDO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41736 & LAURA FLORENCIA COYOTL CANTOR & Nuevo & 16 & \$5,000 & \$459.38 \\
+41737 & IMELDA GALINDO GALINDO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41738 & MANUELA MARGARITA SALAS TEPAL & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{8 ventas}{40,000}{3,675.04}
+\end{vtable}
+
+\aghdr{AGGC002}{EDITH BAILON}
+\begin{vtable}
+41699 & ALEJANDRO MARTINEZ GUZMAN & Nuevo & 16 & \$5,000 & \$459.38 \\
+41700 & MARIA ALEJANDRA SALGADO ROMERO & Nuevo & 16 & \$5,000 & \$459.38 \\
+41701 & GUADALUPE ZAMORA ANDRADE & Nuevo & 16 & \$5,000 & \$459.38 \\
+41703 & BRIAN JIMENEZ RAMALES & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{4 ventas}{20,000}{1,837.52}
+\end{vtable}
+
+\aghdr{AGGC003}{ANGELICA CALITL}
+\begin{vtable}
+41698 & SUSANA SANTOS GOMEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{1 venta}{5,000}{459.38}
+\end{vtable}
+
+\aghdr{AGGC004}{KARINA ARACELI AMARO}
+\begin{vtable}
+41726 & VANESSA AMARO TECHALOTZI & Nuevo & 16 & \$5,000 & \$459.38 \\
+41727 & MARIBEL TELA GARACHI & Nuevo & 16 & \$5,000 & \$459.38 \\
+41728 & BELEN GASPARIANO GOMEZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{3 ventas}{15,000}{1,378.14}
+\end{vtable}
+
+\aghdr{AGGC007}{ANAMARIA SANTAMARIA}
+\begin{vtable}
+41692 & GUADALUPE AMADOR TORRES & Nuevo & 16 & \$5,000 & \$459.38 \\
+41693 & PASCUALA SANCHEZ MOXO & Nuevo & 16 & \$2,000 & \$183.75 \\
+41694 & LAURA BUENO MONARCA & Nuevo & 16 & \$5,000 & \$459.38 \\
+41695 & JULIA BEATRIZ GARCIA PEREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+41696 & ERIKA PEREZ PEREZ & Nuevo & 16 & \$5,000 & \$459.38 \\
+\subtot{5 ventas}{22,000}{2,021.27}
+\end{vtable}
+
+\end{document}
